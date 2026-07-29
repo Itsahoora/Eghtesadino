@@ -20,8 +20,9 @@ class FinancialAdvisor:
         self.init_database()
 
     def _connect(self):
-        return sqlite3.connect(self.db_path)
-        return sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path)
+        conn.execute("PRAGMA foreign_keys = ON")
+        return conn
 
     def init_database(self):
         conn = self._connect()
@@ -150,9 +151,9 @@ class FinancialAdvisor:
             password_hash = self._hash_password(password, salt)
             conn = self._connect()
             conn.execute(
-                "INSERT INTO users (username, password, password_hash, password_salt, display_name) "
-                "VALUES (?, ?, ?, ?, ?)",
-                (username, password, password_hash, salt, username),
+                "INSERT INTO users (username, password_hash, password_salt, display_name) "
+                "VALUES (?, ?, ?, ?)",
+                (username, password_hash, salt, username),
             )
             conn.commit()
             conn.close()
@@ -164,7 +165,8 @@ class FinancialAdvisor:
         conn = self._connect()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT id, username, password, password_hash, password_salt, display_name, privacy_enabled "
+            "SELECT id, username, password_hash, password_salt, "
+            "display_name, privacy_enabled "
             "FROM users WHERE username = ?",
             (username,),
         )
@@ -174,15 +176,9 @@ class FinancialAdvisor:
         if not row:
             return None
 
-        user_id, stored_username, stored_password, password_hash, salt, display_name, privacy_enabled = row
+        user_id, stored_username, password_hash, salt, display_name, privacy_enabled = row
 
-        authenticated = False
-        if password_hash and salt and self._verify_password(password, password_hash, salt):
-            authenticated = True
-        elif stored_password == password:
-            authenticated = True
-
-        if not authenticated:
+        if not password_hash or not salt or not self._verify_password(password, password_hash, salt):
             return None
 
         return {
@@ -269,9 +265,10 @@ class FinancialAdvisor:
                 ),
             )
             conn.commit()
-        except Exception as e:
-            print(f"Error adding transaction: {e}")
+            return True
+        except Exception:
             conn.rollback()
+            return False
         finally:
             conn.close()
 
@@ -519,8 +516,8 @@ class FinancialAdvisor:
 
         mid = days // 2
         cutoff = (datetime.now() - timedelta(days=mid)).strftime("%Y-%m-%d")
-        early = sum(amt for _, amt, date in expenses if date < cutoff)
-        late = sum(amt for _, amt, date in expenses if date >= cutoff)
+        early = sum(amt for _, amt, date in expenses if date[:10] < cutoff)
+        late = sum(amt for _, amt, date in expenses if date[:10] >= cutoff)
         if early > 0:
             velocity_pct = ((late - early) / early) * 100
         elif late > 0:

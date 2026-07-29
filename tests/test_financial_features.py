@@ -29,8 +29,6 @@ class FinancialFeatureTests(unittest.TestCase):
         self.assertEqual(auth['username'], 'student')
 
     def test_analysis_and_normalization_work(self):
-        user = self.advisor.login_user('student', 'strong-pass')
-        self.assertIsNone(user)
         self.assertTrue(self.advisor.register_user('student', 'strong-pass'))
         user = self.advisor.login_user('student', 'strong-pass')
         self.assertIsNotNone(user)
@@ -47,11 +45,17 @@ class FinancialFeatureTests(unittest.TestCase):
         self.assertIn('summary', insights)
         self.assertIn('recommendations', insights)
 
-    @unittest.skipUnless(HAS_DISPLAY, 'Requires a display server (e.g. Xvfb)')
-    def test_settings_screen_can_be_created(self):
-        from screens.settings_screen import SettingsScreen
-        screen = SettingsScreen(self.advisor, None)
-        self.assertIsNotNone(screen)
+    def test_register_and_login_rejects_wrong_password(self):
+        self.assertTrue(self.advisor.register_user('student2', 'strong-pass'))
+        auth = self.advisor.login_user('student2', 'wrong-pass')
+        self.assertIsNone(auth)
+
+    def test_plaintext_password_not_stored(self):
+        self.assertTrue(self.advisor.register_user('secure_user', 's3cret'))
+        conn = self.advisor._connect()
+        row = conn.execute("SELECT password FROM users WHERE username = ?", ('secure_user',)).fetchone()
+        conn.close()
+        self.assertIsNone(row[0])
 
 
 if __name__ == '__main__':

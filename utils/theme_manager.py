@@ -66,7 +66,9 @@ class ThemeManager:
     def get_color(self, token, default=None):
         if token in self._overrides:
             return self._overrides[token]
-        return DARK_COLORS.get(token, default)
+        from .theme.colors import LIGHT_COLORS, DARK_COLORS
+        palette = DARK_COLORS if self.mode == 'dark' else LIGHT_COLORS
+        return palette.get(token, default)
 
     def set_color(self, token, value):
         self._overrides[token] = value

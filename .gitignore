@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Application data
+financial_data.db
+test_financial_data.db
+user_scale.json
+user_theme.json
+
+# Database backups
+*.db.bak
+*.db-wal
+*.db-shm
+
+# Test outputs
+.coverage
+htmlcov/
+.pytest_cache/
+*.cache
+
+# Distribution
+*.manifest
+*.spec
+dist/
+build/
+شیوه نامه محور برنامه نویسی و هوش مصنوعی.pdf
+shanasename_athar.md

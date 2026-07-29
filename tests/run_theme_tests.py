@@ -11,9 +11,12 @@ errors = []
 # Build settings screen — only when a display server is available
 if os.environ.get('DISPLAY'):
     try:
+        import customtkinter as ctk
+        root = ctk.CTk()
         from screens.settings_screen import SettingsScreen
         from models.financial_advisor import FinancialAdvisor
-        s = SettingsScreen(FinancialAdvisor(), None)
+        s = SettingsScreen(FinancialAdvisor(), root)
+        root.destroy()
     except Exception as e:
         errors.append(f'SettingsScreen build failed: {e}')
 else:
