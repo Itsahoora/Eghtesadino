@@ -81,6 +81,7 @@ class FinancialAdvisor:
             "privacy_enabled": "ALTER TABLE users ADD COLUMN privacy_enabled INTEGER DEFAULT 0",
             "show_learning_tips": "ALTER TABLE users ADD COLUMN show_learning_tips INTEGER DEFAULT 1",
             "compact_mode": "ALTER TABLE users ADD COLUMN compact_mode INTEGER DEFAULT 0",
+            "profile_pic": "ALTER TABLE users ADD COLUMN profile_pic TEXT",
         }
         for col, ddl in migrations.items():
             if col not in columns:
@@ -151,9 +152,9 @@ class FinancialAdvisor:
             password_hash = self._hash_password(password, salt)
             conn = self._connect()
             conn.execute(
-                "INSERT INTO users (username, password_hash, password_salt, display_name) "
-                "VALUES (?, ?, ?, ?)",
-                (username, password_hash, salt, username),
+                "INSERT INTO users (username, password_hash, password_salt, display_name, profile_pic) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (username, password_hash, salt, username, None),
             )
             conn.commit()
             conn.close()
@@ -166,7 +167,7 @@ class FinancialAdvisor:
         cursor = conn.cursor()
         cursor.execute(
             "SELECT id, username, password_hash, password_salt, "
-            "display_name, privacy_enabled "
+            "display_name, privacy_enabled, profile_pic "
             "FROM users WHERE username = ?",
             (username,),
         )
@@ -176,24 +177,33 @@ class FinancialAdvisor:
         if not row:
             return None
 
-        user_id, stored_username, password_hash, salt, display_name, privacy_enabled = row
+        user_id = row[0]
+        stored_username = row[1]
+        password_hash = row[2]
+        salt = row[3]
+        display_name = row[4]
+        privacy_enabled = row[5]
+        profile_pic = row[6] if len(row) > 6 else None
 
         if not password_hash or not salt or not self._verify_password(password, password_hash, salt):
             return None
 
-        return {
+        result = {
             "id": user_id,
             "username": stored_username,
             "display_name": display_name or stored_username,
             "privacy_enabled": bool(privacy_enabled),
         }
+        if profile_pic:
+            result["profile_pic"] = profile_pic
+        return result
 
     def get_user_profile(self, user_id):
         conn = self._connect()
         cursor = conn.cursor()
         cursor.execute(
             "SELECT id, username, display_name, password_salt, privacy_enabled, "
-            "show_learning_tips, compact_mode FROM users WHERE id = ?",
+            "show_learning_tips, compact_mode, profile_pic FROM users WHERE id = ?",
             (user_id,),
         )
         row = cursor.fetchone()
@@ -208,6 +218,7 @@ class FinancialAdvisor:
             "privacy_enabled": bool(row[4]),
             "show_learning_tips": bool(row[5]) if len(row) > 5 else True,
             "compact_mode": bool(row[6]) if len(row) > 6 else False,
+            "profile_pic": row[7] if len(row) > 7 else None,
         }
 
     def update_user_setting(self, user_id, key, value):
@@ -230,6 +241,36 @@ class FinancialAdvisor:
 
     def update_compact_mode_setting(self, user_id, enabled):
         return self.update_user_setting(user_id, "compact_mode", enabled)
+
+    def update_display_name(self, user_id, display_name):
+        if not user_id or not display_name or not display_name.strip():
+            return False
+        try:
+            conn = self._connect()
+            conn.execute(
+                "UPDATE users SET display_name = ? WHERE id = ?",
+                (display_name.strip(), user_id),
+            )
+            conn.commit()
+            conn.close()
+            return True
+        except Exception:
+            return False
+
+    def update_profile_pic(self, user_id, pic_path):
+        if not user_id:
+            return False
+        try:
+            conn = self._connect()
+            conn.execute(
+                "UPDATE users SET profile_pic = ? WHERE id = ?",
+                (pic_path, user_id),
+            )
+            conn.commit()
+            conn.close()
+            return True
+        except Exception:
+            return False
 
     def delete_account(self, user_id):
         try:

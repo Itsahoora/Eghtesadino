@@ -1,7 +1,7 @@
 import os
 import json
 import customtkinter as ctk
-from .theme.colors import DARK_COLORS
+from .theme.colors import DARK_COLORS, PRESETS
 
 
 class ThemeManager:
@@ -22,13 +22,17 @@ class ThemeManager:
             with open(self.THEME_FILE, 'r', encoding='utf-8') as fh:
                 data = json.load(fh)
                 self.mode = data.get('mode', self.mode)
+                self._overrides = data.get('overrides', {})
         except Exception:
             pass
 
     def _save(self):
         try:
             with open(self.THEME_FILE, 'w', encoding='utf-8') as fh:
-                json.dump({'mode': self.mode}, fh)
+                json.dump({
+                    'mode': self.mode,
+                    'overrides': self._overrides,
+                }, fh, ensure_ascii=False, indent=2)
         except Exception:
             pass
 
@@ -72,6 +76,16 @@ class ThemeManager:
 
     def set_color(self, token, value):
         self._overrides[token] = value
+        self._save()
+        for cb in list(self._listeners):
+            try:
+                cb()
+            except Exception:
+                pass
+
+    def clear_overrides(self):
+        self._overrides = {}
+        self._save()
         for cb in list(self._listeners):
             try:
                 cb()
@@ -89,6 +103,20 @@ class ThemeManager:
             pass
 
     def apply_preset(self, name):
+        preset = PRESETS.get(name)
+        if preset is None:
+            return False
+        self._overrides = dict(preset.get(self.mode, {}))
+        try:
+            ctk.set_appearance_mode(self.mode.capitalize())
+        except Exception:
+            pass
+        self._save()
+        for cb in list(self._listeners):
+            try:
+                cb()
+            except Exception:
+                pass
         return True
 
     def export_theme(self):
@@ -108,7 +136,16 @@ class ThemeManager:
             ctk.set_appearance_mode(self.mode.capitalize())
         except Exception:
             pass
+        self._save()
         return True
+
+    def get_preset_name(self):
+        for name, preset in PRESETS.items():
+            if preset.get(self.mode) == self._overrides:
+                return name
+        if not self._overrides:
+            return 'default'
+        return 'custom'
 
 
 theme_manager = ThemeManager()

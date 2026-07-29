@@ -1,7 +1,8 @@
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
+*.so
 *.pyd
 .Python
 build/
@@ -23,7 +24,6 @@ wheels/
 # Virtual environments
 .venv/
 venv/
-ENV/
 env/
 .venv
 
@@ -39,6 +39,9 @@ env/
 Thumbs.db
 Desktop.ini
 
+# Logs
+*.log
+
 # Environment
 .env
 .env.*
@@ -49,22 +52,26 @@ financial_data.db
 test_financial_data.db
 user_scale.json
 user_theme.json
-
-# Database backups
-*.db.bak
+*.db-journal
+*.sqlite-journal
 *.db-wal
 *.db-shm
+
+# Python cache
+.pytest_cache/
+.mypy_cache/
+*.cache
 
 # Test outputs
 .coverage
 htmlcov/
-.pytest_cache/
-*.cache
 
 # Distribution
 *.manifest
 *.spec
 dist/
 build/
+
+# Documentation
 شیوه نامه محور برنامه نویسی و هوش مصنوعی.pdf
 shanasename_athar.md

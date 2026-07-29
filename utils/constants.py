@@ -54,6 +54,18 @@ ICONS = {
     'user':         '👤',
     'show':         '👁',
     'hide':         '🙈',
+    'menu':         '☰',
+    'upload':       '📁',
+    'camera':       '📷',
+    'remove':       '✕',
+    'check':        '✓',
+    'close':        '✕',
+    'chevron':      '▾',
+    'pencil':       '✎',
+    'trash':        '🗑',
+    'save':         '💾',
+    'language':     '🌐',
+    'palette':      '🎨',
 }
 
 # ── Font families ─────────────────────────────────────────────────
