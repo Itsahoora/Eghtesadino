@@ -13,11 +13,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Validate required files exist
+        run: |
+          $required = @('requirements.txt', 'main.py', 'Eghtesadino.spec')
+          foreach ($file in $required) {
+            if (-Not (Test-Path $file)) {
+              Write-Error "Required file not found: $file"
+              exit 1
+            }
+            Write-Host "Found: $file"
+          }
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-          architecture: "x64"
+          python-version: '3.12'
+          architecture: 'x64'
 
       - name: Cache pip packages
         uses: actions/cache@v4
@@ -33,16 +44,11 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
-      - name: Run tests if test directory exists
+      - name: Run tests
         continue-on-error: true
-        if: always()
         run: |
           pip install pytest
-          if exist tests (
-            python -m pytest tests/ -v
-          ) else (
-            echo "No tests directory found, skipping tests"
-          )
+          python -m pytest tests/ -v
 
       - name: Build executable with PyInstaller
         run: |
@@ -52,7 +58,7 @@ jobs:
         run: |
           if (Test-Path "dist\Eghtesadino.exe") {
             $file = Get-Item "dist\Eghtesadino.exe"
-            Write-Host "Executable found: $($file.Name), Size: $($file.Length) bytes"
+            Write-Host "Executable: $($file.Name), Size: $($file.Length) bytes"
           } elseif (Test-Path "dist\Eghtesadino") {
             Write-Host "One-directory build found in dist\Eghtesadino"
           } else {
