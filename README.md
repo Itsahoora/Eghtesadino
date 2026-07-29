@@ -6,12 +6,12 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](tests/)
+[![CI](https://github.com/Itsahoora/Eghtesadino-Finance-App-/actions/workflows/build.yml/badge.svg)](https://github.com/Itsahoora/Eghtesadino-Finance-App-/actions/workflows/build.yml)
 
 Track income, manage expenses, set savings goals, and receive intelligent budgeting insights — all in a clean, modern interface.
 
-[Getting Started](#getting-started) • [Features](#features) • [Screenshots](#screenshots) • [Architecture](#architecture) • [Contributing](#contributing)
+[Getting Started](#getting-started) • [Features](#features) • [Building](#building) • [Screenshots](#screenshots) • [Architecture](#architecture)
 
 </div>
 
@@ -71,7 +71,6 @@ Eghtesadino is a Python desktop application that helps university students take 
 
 </div>
 
-
 ## Getting Started
 
 ### Prerequisites
@@ -109,6 +108,50 @@ The SQLite database (`financial_data.db`) is created automatically on first laun
 5. **View Reports** for monthly comparison, category breakdown, and spending insights
 6. **Customize** theme, privacy mode, and layout from Settings
 
+## Building
+
+### Prerequisites for Building
+
+- Python 3.12 or later
+- `pip` package manager
+
+### Local Build (Windows)
+
+```bash
+# 1. Install PyInstaller
+pip install pyinstaller
+
+# 2. Build the executable
+pyinstaller Eghtesadino.spec
+
+# 3. Find the executable in dist/
+dist\Eghtesadino.exe
+```
+
+### GitHub Actions Build
+
+The project includes a GitHub Actions workflow that automatically builds a Windows executable on every push to `main` and on manual trigger.
+
+**Workflow steps:**
+1. Check out the repository
+2. Set up Python 3.12 on Windows
+3. Cache pip packages for faster builds
+4. Install dependencies from `requirements.txt`
+5. Install PyInstaller
+6. Run all tests
+7. Build the executable with `pyinstaller Eghtesadino.spec`
+8. Upload `Eghtesadino.exe` as an artifact
+
+**Downloading the artifact:**
+1. Go to the repository's **Actions** tab
+2. Select the latest workflow run
+3. Click on the **Upload artifact** step
+4. Download `Eghtesadino-windows-executable.zip`
+5. Extract to get `Eghtesadino.exe`
+
+**GitHub Release:**
+When a version tag (e.g., `v1.0.0`) is pushed, the workflow automatically attaches `Eghtesadino.exe` to the release.
+
 ## Architecture
 
 ```
@@ -137,7 +180,7 @@ Eghtesadino/
 │   ├── dashboard_screen.py        # Main hub: balance, transactions, goals
 │   ├── reports_screen.py          # Analytics & reporting
 │   ├── settings_screen.py         # Theme, privacy, display settings
-│   └── add_goal_screen.py         # Goal creation form
+│   └── add_goal_screen.py        # Goal creation form
 ├── utils/
 │   ├── __init__.py
 │   ├── constants.py               # Categories, icons, spacing tokens
@@ -202,30 +245,6 @@ python tests/run_theme_tests.py
 # Run specific test file
 python -m pytest tests/test_financial_features.py -v
 ```
-
-## Future Improvements
-
-- [ ] Export reports to CSV/PDF
-- [ ] Budget limits per category with visual indicators
-- [ ] Recurring income detection
-- [ ] Multi-currency support
-- [ ] Data backup and restore
-- [ ] Chart-based visualizations (matplotlib integration)
-- [ ] Mobile companion app
-
-## Contributing
-
-Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting a PR.
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/your-feature`)
-3. Commit your changes (`git commit -m "Add your feature"`)
-4. Push to the branch (`git push origin feature/your-feature`)
-5. Open a Pull Request
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for a list of changes.
 
 ## License
 

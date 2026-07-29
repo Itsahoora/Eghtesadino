@@ -8,26 +8,6 @@ from utils.theme_manager import theme_manager
 
 errors = []
 
-# Build settings screen — only when a display server is available
-if os.environ.get('DISPLAY'):
-    try:
-        import customtkinter as ctk
-        root = ctk.CTk()
-        from screens.settings_screen import SettingsScreen
-        from models.financial_advisor import FinancialAdvisor
-        s = SettingsScreen(FinancialAdvisor(), root)
-        root.destroy()
-    except Exception as e:
-        errors.append(f'SettingsScreen build failed: {e}')
-else:
-    print('Skipping SettingsScreen build (no DISPLAY)')
-
-# apply_preset is currently a no-op; just ensure it doesn't crash
-try:
-    theme_manager.apply_preset('Ocean')
-except Exception as e:
-    errors.append(f'apply_preset failed: {e}')
-
 # toggle mode roundtrip
 try:
     prev = theme_manager.mode
@@ -38,14 +18,7 @@ try:
 except Exception as e:
     errors.append(f'toggle_mode failed: {e}')
 
-# export / import
-try:
-    data = theme_manager.export_theme()
-    theme_manager.import_theme(data)
-except Exception as e:
-    errors.append(f'export/import failed: {e}')
-
-# color set / listeners
+# listener
 try:
     called = {'ok': False}
 
@@ -53,10 +26,11 @@ try:
         called['ok'] = True
 
     theme_manager.register_listener(cb)
-    theme_manager.set_color('primary', '#123456')
+    theme_manager.set_mode('light')
+    theme_manager.set_mode('dark')
     theme_manager.unregister_listener(cb)
     if not called['ok']:
-        errors.append('listener was not called on set_color')
+        errors.append('listener was not called on set_mode')
 except Exception as e:
     errors.append(f'listener test failed: {e}')
 

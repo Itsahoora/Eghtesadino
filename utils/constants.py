@@ -19,53 +19,28 @@ MEDIUM_PADDING = 18
 
 # ── Unicode icon map ──────────────────────────────────────────────
 ICONS = {
-    # Navigation
-    'back':         '←',
     'forward':      '→',
-    'logout':       '⏻',
     'settings':     '⚙',
     'reports':      '📊',
     'dashboard':    '🏠',
-
-    # Actions
     'add':          '+',
     'delete':       '🗑',
-    'reset':        '↺',
-
-    # Finance
     'balance':      '💰',
     'income':       '📈',
     'expense':      '📉',
     'goal':         '🎯',
     'category':     '📂',
     'amount':       '💲',
-    'transfer':     '↔',
     'repeat':       '↻',
-
-    # Status
     'success':      '✓',
     'warning':      '⚠',
     'info':         'ℹ',
     'lock':         '🔒',
     'tips':         '💡',
-
-    # UI
     'theme_dark':   '🌙',
     'user':         '👤',
     'show':         '👁',
     'hide':         '🙈',
-    'menu':         '☰',
-    'upload':       '📁',
-    'camera':       '📷',
-    'remove':       '✕',
-    'check':        '✓',
-    'close':        '✕',
-    'chevron':      '▾',
-    'pencil':       '✎',
-    'trash':        '🗑',
-    'save':         '💾',
-    'language':     '🌐',
-    'palette':      '🎨',
 }
 
 # ── Font families ─────────────────────────────────────────────────

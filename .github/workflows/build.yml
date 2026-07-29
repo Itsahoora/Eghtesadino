@@ -1,0 +1,70 @@
+name: Build Windows Executable
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: 'x64'
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Run tests
+        run: |
+          pip install pytest
+          python -m pytest tests/ -v
+
+      - name: Build executable with PyInstaller
+        run: |
+          pyinstaller Eghtesadino.spec
+
+      - name: Verify executable exists
+        run: |
+          if (!(Test-Path "dist\Eghtesadino.exe")) {
+            Write-Error "Eghtesadino.exe not found in dist/"
+            exit 1
+          }
+          Get-Item "dist\Eghtesadino.exe" | Select-Object Name, Length, FullName
+
+      - name: Upload executable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Eghtesadino-windows-executable
+          path: dist/Eghtesadino.exe
+          retention-days: 30
+
+      - name: Optional: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/Eghtesadino.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

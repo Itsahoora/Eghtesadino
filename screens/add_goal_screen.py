@@ -2,7 +2,7 @@ import customtkinter as ctk
 from utils.colors import COLORS
 from utils.scale import sv
 from utils.constants import ICONS, BASE_PADDING, MEDIUM_PADDING
-from utils.ui_components import Card, TitleLabel, font, animate_card_intro
+from utils.ui_components import Card, TitleLabel, font
 
 
 class AddGoalScreen:
@@ -19,7 +19,6 @@ class AddGoalScreen:
         pad = sv(BASE_PADDING)
         med = sv(MEDIUM_PADDING)
 
-        # ── Header ──
         header = ctk.CTkFrame(self.root, fg_color='transparent')
         header.pack(fill='x', padx=pad, pady=(sv(20), sv(12)))
 
@@ -28,7 +27,7 @@ class AddGoalScreen:
 
         ctk.CTkButton(
             header_left,
-            text=f'{ICONS["back"]}  Back',
+            text='←  Back',
             command=lambda: self._nav('dashboard'),
             fg_color=COLORS.get('elevated_bg'),
             hover_color=COLORS.get('divider'),
@@ -50,19 +49,15 @@ class AddGoalScreen:
             font=font(20, 'bold'), text_color=COLORS.get('text'),
         ).pack(side='left')
 
-        # ── Card ──
         body = ctk.CTkFrame(
             self.root, fg_color=COLORS.get('card_bg'),
             corner_radius=sv(16),
         )
         body.pack(fill='both', expand=True, padx=pad, pady=(0, pad))
-        self.root.after(100, lambda: animate_card_intro(body))
 
-        # ── Form ──
         form = ctk.CTkFrame(body, fg_color='transparent')
         form.pack(pady=med * 2, padx=med * 2)
 
-        # Goal name
         ctk.CTkLabel(
             form, text=f'{ICONS["goal"]}  Goal Name',
             font=font(13, 'bold'), text_color=COLORS.get('text'),
@@ -77,7 +72,6 @@ class AddGoalScreen:
         )
         self.name_entry.pack(pady=(0, med))
 
-        # Target amount
         ctk.CTkLabel(
             form, text=f'{ICONS["amount"]}  Target Amount',
             font=font(13, 'bold'), text_color=COLORS.get('text'),
@@ -92,9 +86,8 @@ class AddGoalScreen:
         )
         self.target_entry.pack(pady=(0, med * 2))
 
-        # Create button
         ctk.CTkButton(
-            form, text=f'{ICONS["add"]}  Create Goal',
+            form, text='+  Create Goal',
             command=self._do_add,
             fg_color=COLORS.get('accent'),
             hover_color=COLORS.get('primary'),

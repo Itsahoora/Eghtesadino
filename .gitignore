@@ -52,6 +52,7 @@ financial_data.db
 test_financial_data.db
 user_scale.json
 user_theme.json
+assets/profiles/
 *.db-journal
 *.sqlite-journal
 *.db-wal

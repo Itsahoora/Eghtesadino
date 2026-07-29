@@ -1,4 +1,3 @@
-import os
 import customtkinter as ctk
 import tkinter.messagebox as mb
 from utils.colors import COLORS
@@ -9,10 +8,9 @@ from utils.constants import (
 )
 from utils.scale import sv
 from utils.ui_components import (
-    MutedLabel, Card, Avatar, DropdownMenu, font, animate_card_intro,
+    MutedLabel, Card, font,
 )
 from utils.theme_manager import theme_manager
-from utils.localization import tr
 
 
 class DashboardScreen:
@@ -23,10 +21,7 @@ class DashboardScreen:
         self.user_id = None
         self.show_learning_tips = True
         self.compact_mode = False
-        self._canvas = None
-        self._profile_menu = None
         self._build_ui()
-        self._capture_canvas()
 
     def _build_ui(self):
         pad = sv(BASE_PADDING)
@@ -43,7 +38,6 @@ class DashboardScreen:
         self.content = ctk.CTkFrame(self.root, fg_color='transparent')
         self.content.pack(fill='both', expand=True, padx=pad)
 
-        # ── Header ──
         header = ctk.CTkFrame(self.content, fg_color='transparent')
         header.pack(fill='x', pady=(sv(20), med))
 
@@ -55,66 +49,43 @@ class DashboardScreen:
             font=font(22), text_color=COLORS.get('primary'),
         ).pack(side='left', padx=(0, sv(8)))
 
-        self.title_label = ctk.CTkLabel(
-            header_left, text=tr('dashboard'),
+        ctk.CTkLabel(
+            header_left, text='Dashboard',
             font=font(22, 'bold'), text_color=COLORS.get('text'),
-        )
-        self.title_label.pack(side='left')
+        ).pack(side='left')
 
         header_right = ctk.CTkFrame(header, fg_color='transparent')
         header_right.pack(side='right')
 
-        # Reports button (small, with icon, left of profile menu)
-        self.reports_btn = ctk.CTkButton(
-            header_right,
-            text=f'{ICONS["reports"]}',
+        ctk.CTkButton(
+            header_right, text='Reports',
             command=lambda: self._nav('reports'),
             fg_color=COLORS.get('primary'),
             hover_color=COLORS.get('primary_hover'),
-            corner_radius=sv(20), height=sv(36), width=sv(36),
-            font=font(14),
-        )
-        self.reports_btn.pack(side='left', padx=(0, sv(8)))
+            corner_radius=sv(20), height=sv(36), width=sv(80),
+            font=font(12),
+        ).pack(side='left', padx=(0, sv(6)))
 
-        # Profile dropdown trigger
-        self._profile_frame = ctk.CTkFrame(
-            header_right, fg_color=COLORS.get('elevated_bg'),
-            corner_radius=sv(20), height=sv(36),
-            border_width=0, cursor='hand2',
-        )
-        self._profile_frame.pack(side='left')
-        self._profile_frame.bind('<Button-1>', lambda e: self._toggle_profile_menu())
+        ctk.CTkButton(
+            header_right, text='Settings',
+            command=lambda: self._nav('settings'),
+            fg_color=COLORS.get('elevated_bg'),
+            hover_color=COLORS.get('divider'),
+            text_color=COLORS.get('text'),
+            corner_radius=sv(20), height=sv(36), width=sv(80),
+            font=font(12),
+        ).pack(side='left')
 
-        self._avatar = Avatar(
-            self._profile_frame, size=28, name='',
-        )
-        self._avatar.pack(side='left', padx=(sv(4), sv(6)))
-
-        self._profile_name = ctk.CTkLabel(
-            self._profile_frame, text='',
-            font=font(12), text_color=COLORS.get('text'),
-        )
-        self._profile_name.pack(side='left', padx=(0, sv(4)))
-
-        ctk.CTkLabel(
-            self._profile_frame, text=ICONS['chevron'],
-            font=font(10), text_color=COLORS.get('muted_text'),
-        ).pack(side='left', padx=(0, sv(4)))
-
-        # ── Alerts banner ──
         self.alerts_frame = ctk.CTkFrame(self.content, fg_color='transparent')
         self.alerts_frame.pack(fill='x', pady=(0, med))
 
-        # ── Balance card ──
         self.balance_card = Card(master=self.content, radius=sv(16))
         self.balance_card.pack(fill='x', pady=(0, med))
-        animate_card_intro(self.balance_card)
-
         bal_inner = ctk.CTkFrame(self.balance_card, fg_color='transparent')
         bal_inner.pack(fill='x', padx=sv(24), pady=sv(20))
 
         ctk.CTkLabel(
-            bal_inner, text=f"{ICONS['balance']}  {tr('balance')}",
+            bal_inner, text=f"{ICONS['balance']}  Balance",
             font=font(13), text_color=COLORS.get('muted_text'),
         ).pack(anchor='w')
 
@@ -128,34 +99,31 @@ class DashboardScreen:
         sub_row.pack(anchor='w', pady=(sv(4), 0))
 
         self.income_label = ctk.CTkLabel(
-            sub_row, text=f"{ICONS['income']} {tr('income')}: --",
+            sub_row, text=f"{ICONS['income']} Income: --",
             font=font(11), text_color=COLORS.get('success'),
         )
         self.income_label.pack(side='left', padx=(0, sv(16)))
 
         self.expense_label = ctk.CTkLabel(
-            sub_row, text=f"{ICONS['expense']} {tr('expense')}: --",
+            sub_row, text=f"{ICONS['expense']} Expense: --",
             font=font(11), text_color=COLORS.get('danger'),
         )
         self.expense_label.pack(side='left')
 
-        # ── Quick stats row ──
         self.stats_frame = ctk.CTkFrame(self.content, fg_color='transparent')
         self.stats_frame.pack(fill='x', pady=(0, med))
 
-        self.stat_daily = self._make_stat_card(self.stats_frame, ICONS['expense'], tr('daily_avg'), '--')
+        self.stat_daily = self._make_stat_card(self.stats_frame, ICONS['expense'], 'Daily Avg', '--')
         self.stat_daily.pack(side='left', fill='x', expand=True, padx=(0, sv(6)))
 
-        self.stat_savings = self._make_stat_card(self.stats_frame, ICONS['tips'], tr('savings_rate'), '--')
+        self.stat_savings = self._make_stat_card(self.stats_frame, ICONS['tips'], 'Savings Rate', '--')
         self.stat_savings.pack(side='left', fill='x', expand=True, padx=sv(3))
 
-        self.stat_velocity = self._make_stat_card(self.stats_frame, ICONS['forward'], tr('spending'), '--')
+        self.stat_velocity = self._make_stat_card(self.stats_frame, ICONS['forward'], 'Spending', '--')
         self.stat_velocity.pack(side='left', fill='x', expand=True, padx=(sv(6), 0))
 
-        # ── Goals card ──
         self.goals_card = Card(master=self.content, radius=sv(16))
         self.goals_card.pack(fill='x', pady=(0, med))
-        animate_card_intro(self.goals_card)
 
         goals_header = ctk.CTkFrame(self.goals_card, fg_color='transparent')
         goals_header.pack(fill='x', padx=sv(20), pady=(sv(16), 0))
@@ -168,14 +136,13 @@ class DashboardScreen:
             font=font(16), text_color=COLORS.get('accent'),
         ).pack(side='left', padx=(0, sv(6)))
 
-        self.goals_title = ctk.CTkLabel(
-            goals_left, text=tr('goals'),
+        ctk.CTkLabel(
+            goals_left, text='Goals',
             font=font(16, 'bold'), text_color=COLORS.get('text'),
-        )
-        self.goals_title.pack(side='left')
+        ).pack(side='left')
 
         ctk.CTkButton(
-            goals_header, text=f"{ICONS['add']}  {tr('add_goal')}",
+            goals_header, text='+  Add Goal',
             command=lambda: self._nav('add_goal'),
             fg_color=COLORS.get('primary'),
             hover_color=COLORS.get('primary_hover'),
@@ -188,11 +155,10 @@ class DashboardScreen:
         )
         alloc_frame.pack(fill='x', padx=sv(20), pady=sv(12))
 
-        self.alloc_label = ctk.CTkLabel(
-            alloc_frame, text=f"{ICONS['transfer']} {tr('allocate')}:",
+        ctk.CTkLabel(
+            alloc_frame, text='Allocate:',
             font=font(11), text_color=COLORS.get('muted_text'),
-        )
-        self.alloc_label.pack(side='left', padx=(sv(10), sv(6)))
+        ).pack(side='left', padx=(sv(10), sv(6)))
 
         self.goal_var = ctk.StringVar()
         self.goal_menu = ctk.CTkOptionMenu(
@@ -204,7 +170,7 @@ class DashboardScreen:
         self.goal_menu.pack(side='left', padx=small)
 
         self.alloc_amount_entry = ctk.CTkEntry(
-            alloc_frame, placeholder_text=tr('amount'),
+            alloc_frame, placeholder_text='Amount',
             width=sv(80), height=sv(32), font=font(12),
         )
         self.alloc_amount_entry.pack(side='left', padx=small)
@@ -223,10 +189,8 @@ class DashboardScreen:
         self.goals_list_frame.pack(
             fill='both', expand=True, padx=sv(20), pady=(0, sv(16)))
 
-        # ── Recent transactions card ──
         self.trx_card = Card(master=self.content, radius=sv(16))
         self.trx_card.pack(fill='both', expand=True, padx=0, pady=(0, med))
-        animate_card_intro(self.trx_card)
 
         trx_header = ctk.CTkFrame(self.trx_card, fg_color='transparent')
         trx_header.pack(fill='x', padx=sv(20), pady=(sv(16), sv(4)))
@@ -239,11 +203,10 @@ class DashboardScreen:
             font=font(15), text_color=COLORS.get('primary'),
         ).pack(side='left', padx=(0, sv(6)))
 
-        self.trx_title = ctk.CTkLabel(
-            trx_left, text=tr('recent_transactions'),
+        ctk.CTkLabel(
+            trx_left, text='Recent Transactions',
             font=font(15, 'bold'), text_color=COLORS.get('text'),
-        )
-        self.trx_title.pack(side='left')
+        ).pack(side='left')
 
         self.trx_list = ctk.CTkTextbox(
             self.trx_card, state='disabled',
@@ -255,7 +218,6 @@ class DashboardScreen:
         self.trx_list.pack(
             fill='both', expand=True, padx=sv(20), pady=(0, sv(16)))
 
-        # ── Add transaction card ──
         self.form_card = Card(master=self.content, radius=sv(16))
         self.form_card.pack(fill='x', padx=0, pady=(0, med))
 
@@ -267,11 +229,10 @@ class DashboardScreen:
             font=font(15), text_color=COLORS.get('accent'),
         ).pack(side='left', padx=(0, sv(6)))
 
-        self.form_title = ctk.CTkLabel(
-            form_header, text=tr('add_transaction'),
+        ctk.CTkLabel(
+            form_header, text='Add Transaction',
             font=font(15, 'bold'), text_color=COLORS.get('text'),
-        )
-        self.form_title.pack(side='left')
+        ).pack(side='left')
 
         form = ctk.CTkFrame(self.form_card, fg_color='transparent')
         form.pack(fill='x', padx=sv(20), pady=(0, sv(14)))
@@ -298,13 +259,13 @@ class DashboardScreen:
         self.cat_menu.grid(row=0, column=1, padx=sv(4), pady=sv(4), sticky='ew')
 
         self.desc_entry = ctk.CTkEntry(
-            form, placeholder_text=tr('description'),
+            form, placeholder_text='Description',
             height=sv(34), font=font(12),
         )
         self.desc_entry.grid(row=0, column=2, padx=sv(4), pady=sv(4), sticky='ew')
 
         self.amount_entry = ctk.CTkEntry(
-            form, placeholder_text=tr('amount'),
+            form, placeholder_text='Amount',
             width=sv(80), height=sv(34), font=font(12),
         )
         self.amount_entry.grid(row=0, column=3, padx=sv(4), pady=sv(4), sticky='ew')
@@ -320,7 +281,6 @@ class DashboardScreen:
 
         self.type_var.trace_add('write', self._on_type_change)
 
-        # ── Learning card ──
         self.learning_card = Card(master=self.content, radius=sv(16))
         self.learning_card.pack(fill='x', pady=(0, sv(10)))
 
@@ -332,11 +292,10 @@ class DashboardScreen:
             font=font(14), text_color=COLORS.get('warning'),
         ).pack(side='left', padx=(0, sv(6)))
 
-        self.learning_title = ctk.CTkLabel(
-            learn_header, text=tr('learning_corner'),
+        ctk.CTkLabel(
+            learn_header, text='Learning Corner',
             font=font(14, 'bold'), text_color=COLORS.get('text'),
-        )
-        self.learning_title.pack(side='left')
+        ).pack(side='left')
 
         self.learning_box = ctk.CTkTextbox(
             self.learning_card, state='disabled',
@@ -346,44 +305,6 @@ class DashboardScreen:
             font=(FONT_FAMILY, sv(12)), border_width=0,
         )
         self.learning_box.pack(fill='x', padx=sv(20), pady=(0, sv(14)))
-
-        # ── Profile dropdown ──
-        self._setup_profile_menu()
-
-    def _setup_profile_menu(self):
-        menu_items = [
-            {'icon': ICONS['user'], 'text': tr('profile'), 'command': self._open_profile},
-            {'icon': ICONS['settings'], 'text': tr('settings'), 'command': lambda: self._nav('settings')},
-            {'divider': True},
-            {'icon': ICONS['logout'], 'text': tr('logout'), 'command': self._logout},
-            {'icon': ICONS['delete'], 'text': tr('delete_account'), 'command': self._delete_account, 'danger': True},
-        ]
-        self._profile_menu = DropdownMenu(
-            self.master, self._profile_frame,
-            menu_items, on_select=lambda t: None,
-        )
-
-    def _toggle_profile_menu(self):
-        if self._profile_menu is None:
-            self._setup_profile_menu()
-        if self._profile_menu.is_open():
-            self._profile_menu.close()
-        else:
-            self._profile_menu.open()
-
-    def _capture_canvas(self):
-        try:
-            self._canvas = self.root._parent_canvas
-        except AttributeError:
-            self._canvas = None
-
-    def _update_scroll_region(self):
-        try:
-            self.root.update_idletasks()
-            if self._canvas is not None:
-                self._canvas.configure(scrollregion=self._canvas.bbox('all'))
-        except Exception:
-            pass
 
     def _make_stat_card(self, parent, icon, label, value):
         card = ctk.CTkFrame(
@@ -423,44 +344,9 @@ class DashboardScreen:
         except Exception:
             pass
 
-    def _logout(self):
-        confirm = mb.askyesno(tr('logout_confirm'), tr('logout_msg'))
-        if confirm:
-            self.user_id = None
-            if callable(self.on_navigate):
-                self.on_navigate('login')
-
-    def _delete_account(self):
-        confirm = mb.askyesno(tr('delete_confirm'), tr('delete_message'))
-        if confirm:
-            double_confirm = mb.askyesno(
-                tr('delete_double'), tr('delete_double_msg'))
-            if double_confirm:
-                if self.advisor.delete_account(self.user_id):
-                    mb.showinfo(tr('success'), tr('delete_message'))
-                    self.user_id = None
-                    if callable(self.on_navigate):
-                        self.on_navigate('login')
-                else:
-                    mb.showerror(tr('error'), "Failed to delete account")
-
     def _nav(self, target):
         if callable(self.on_navigate):
             self.on_navigate(target)
-
-    def _open_profile(self):
-        from screens.profile_screen import ProfileDialog
-        if self._profile_menu:
-            self._profile_menu.close()
-        dialog = ProfileDialog(
-            self.master, self.advisor, self.user_id,
-            on_save=self._on_profile_saved,
-        )
-        self.master.wait_window(dialog.root)
-
-    def _on_profile_saved(self):
-        if getattr(self, 'user_id', None) is not None:
-            self._refresh_profile_info()
 
     def _on_type_change(self, *_):
         if self.type_var.get() == 'income':
@@ -474,7 +360,7 @@ class DashboardScreen:
         try:
             amount = float(self.amount_entry.get())
         except Exception:
-            mb.showwarning(tr('warning'), tr('amount') + " " + tr('invalid'))
+            mb.showwarning('Warning', 'Amount is invalid')
             return
 
         ttype = self.type_var.get()
@@ -494,12 +380,12 @@ class DashboardScreen:
         try:
             amount = float(self.alloc_amount_entry.get())
         except ValueError:
-            mb.showwarning(tr('warning'), tr('amount') + " " + tr('invalid'))
+            mb.showwarning('Warning', 'Amount is invalid')
             return
 
         goal_name = self.goal_var.get()
-        if not goal_name or goal_name == tr('no_goals'):
-            mb.showwarning(tr('warning'), tr('goal_required'))
+        if not goal_name or goal_name == 'No goals yet. Add one to start!':
+            mb.showwarning('Warning', 'Please select a goal')
             return
 
         goals = self.advisor.get_goals(self.user_id)
@@ -515,20 +401,20 @@ class DashboardScreen:
         success, msg = self.advisor.allocate_to_goal(
             self.user_id, goal_id, amount)
         if success:
-            mb.showinfo(tr('success'), msg)
+            mb.showinfo('Success', msg)
             self.alloc_amount_entry.delete(0, 'end')
             self.refresh_ui()
         else:
-            mb.showerror(tr('error'), msg)
+            mb.showerror('Error', msg)
 
     def _delete_goal(self, goal_id, goal_name):
-        confirm = mb.askyesno(tr('delete_confirm'), f"{tr('delete')} '{goal_name}'?")
+        confirm = mb.askyesno('Delete Account', f"Delete '{goal_name}'?")
         if confirm:
             if self.advisor.delete_goal(self.user_id, goal_id):
-                mb.showinfo(tr('success'), tr('goal_deleted'))
+                mb.showinfo('Success', 'Goal deleted')
                 self.refresh_ui()
             else:
-                mb.showerror(tr('error'), "Failed to delete goal")
+                mb.showerror('Error', 'Failed to delete goal')
 
     def _render_alerts(self):
         for w in self.alerts_frame.winfo_children():
@@ -591,16 +477,16 @@ class DashboardScreen:
 
         if goal_names:
             self.goal_menu.configure(values=goal_names)
-            if not self.goal_var.get() or self.goal_var.get() == tr('no_goals'):
+            if not self.goal_var.get() or self.goal_var.get() == 'No goals yet. Add one to start!':
                 self.goal_var.set(goal_names[0])
         else:
-            self.goal_menu.configure(values=[tr('no_goals')])
-            self.goal_var.set(tr('no_goals'))
+            self.goal_menu.configure(values=['No goals yet. Add one to start!'])
+            self.goal_var.set('No goals yet. Add one to start!')
 
         if not goal_progress:
             MutedLabel(
                 self.goals_list_frame,
-                text=f"{ICONS['info']}  {tr('no_goals')}",
+                text=f"{ICONS['info']}  No goals yet. Add one to start!",
                 size=12,
             ).pack(pady=sv(12))
             return
@@ -667,16 +553,8 @@ class DashboardScreen:
         if getattr(self, 'user_id', None) is None:
             return
 
-        profile = self.advisor.get_user_profile(self.user_id)
-        self.show_learning_tips = bool(profile.get('show_learning_tips', True))
-        self.compact_mode = bool(profile.get('compact_mode', False))
-        try:
-            new_pad = sv(12) if self.compact_mode else sv(BASE_PADDING)
-            self.content.pack_configure(padx=new_pad)
-        except Exception:
-            pass
-
-        self._refresh_profile_info()
+        self.show_learning_tips = True
+        self.compact_mode = False
 
         bal = self.advisor.get_balance(self.user_id)
         try:
@@ -687,9 +565,9 @@ class DashboardScreen:
         try:
             insights = self.advisor.get_spending_insights(self.user_id)
             self.income_label.configure(
-                text=f"{ICONS['income']} {tr('income')}: {insights['total_income']:,.2f}")
+                text=f"{ICONS['income']} Income: {insights['total_income']:,.2f}")
             self.expense_label.configure(
-                text=f"{ICONS['expense']} {tr('expense')}: {insights['total_expense']:,.2f}")
+                text=f"{ICONS['expense']} Expense: {insights['total_expense']:,.2f}")
 
             self._set_stat(self.stat_daily, f'{insights["daily_average"]:,.0f}')
             self._set_stat(self.stat_savings, f'{insights["savings_rate"]:.1f}%',
@@ -723,30 +601,13 @@ class DashboardScreen:
                 self.trx_list.insert('end', f'{line}\n')
             if not trxs:
                 self.trx_list.insert(
-                    'end', f'\n  {ICONS["info"]}  {tr("no_transactions")}\n')
+                    'end', f'\n  {ICONS["info"]}  No transactions yet.\n')
             self.trx_list.configure(state='disabled')
         except Exception:
             pass
 
         self._render_goals()
         self._render_learning_tips()
-        self._update_scroll_region()
-
-    def _refresh_profile_info(self):
-        if self.user_id is None:
-            return
-        try:
-            profile = self.advisor.get_user_profile(self.user_id)
-            display_name = profile.get('display_name', '')
-            pic_path = profile.get('profile_pic')
-            if pic_path and os.path.exists(pic_path):
-                self._avatar.set_image(pic_path)
-            else:
-                self._avatar.set_image(None)
-            self._avatar.set_name(display_name)
-            self._profile_name.configure(text=display_name)
-        except Exception:
-            pass
 
     def _render_learning_tips(self):
         if not getattr(self, 'show_learning_tips', True):
@@ -762,17 +623,17 @@ class DashboardScreen:
             self.learning_box.configure(state='normal')
             self.learning_box.delete('0.0', 'end')
             self.learning_box.insert(
-                'end', f"{ICONS['balance']}  {tr('financial_insights')}\n")
+                'end', f"{ICONS['balance']}  Financial Insights\n")
             s = insights['summary']
             self.learning_box.insert(
                 'end',
-                f"{tr('balance')}: {s['balance']:.2f}  |  "
-                f"{tr('savings_rate')}: {s['savings_rate']:.1f}%\n")
-            self.learning_box.insert('end', f'\n{tr("suggestions")}:\n')
+                f"Balance: {s['balance']:.2f}  |  "
+                f"Savings Rate: {s['savings_rate']:.1f}%\n")
+            self.learning_box.insert('end', f'\nSuggestions:\n')
             for item in insights['recommendations'][:2]:
                 self.learning_box.insert('end', f"  {item}\n")
             self.learning_box.insert(
-                'end', f'\n{ICONS["tips"]}  {tr("student_lessons")}:\n')
+                'end', f'\n{ICONS["tips"]}  Student-friendly lessons:\n')
             for topic in topics:
                 self.learning_box.insert(
                     'end',

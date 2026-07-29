@@ -4,7 +4,7 @@ import customtkinter as ctk
 from utils.colors import COLORS
 from utils.scale import sv
 from utils.constants import ICONS, FONT_FAMILY, BASE_PADDING, MEDIUM_PADDING
-from utils.ui_components import Card, MutedLabel, font, animate_card_intro
+from utils.ui_components import Card, MutedLabel, font
 
 
 class ReportsScreen:
@@ -14,8 +14,6 @@ class ReportsScreen:
         self.on_navigate = on_navigate
         self.user_id = None
         self._build_ui()
-
-    # ── UI construction ───────────────────────────────────────────
 
     def _build_ui(self):
         pad = sv(BASE_PADDING)
@@ -29,7 +27,6 @@ class ReportsScreen:
         self.content = ctk.CTkFrame(self.root, fg_color="transparent")
         self.content.pack(fill="both", expand=True, padx=pad)
 
-        # Header
         header = ctk.CTkFrame(self.content, fg_color="transparent")
         header.pack(fill="x", pady=(sv(20), MEDIUM_PADDING))
 
@@ -38,7 +35,7 @@ class ReportsScreen:
 
         ctk.CTkButton(
             header_left,
-            text=f'{ICONS["back"]}  Back',
+            text='←  Back',
             command=lambda: self._nav("dashboard"),
             fg_color=COLORS.get("elevated_bg"),
             hover_color=COLORS.get("divider"),
@@ -59,7 +56,6 @@ class ReportsScreen:
             font=font(20, "bold"), text_color=COLORS.get("text"),
         ).pack(side="left")
 
-        # Five card sections
         self.comparison_card = self._make_card(self.content)
         self.trend_card = self._make_card(self.content)
         self.category_card = self._make_card(self.content)
@@ -69,13 +65,10 @@ class ReportsScreen:
     def _make_card(self, parent):
         card = Card(master=parent, radius=sv(16))
         card.pack(fill="x", pady=(0, MEDIUM_PADDING))
-        animate_card_intro(card)
         body = ctk.CTkFrame(card, fg_color="transparent")
         body.pack(fill="x", padx=sv(20), pady=sv(16))
-        card._body = body  # attach body reference for easy access
+        card._body = body
         return card
-
-    # ── Shared rendering helpers ──────────────────────────────────
 
     def _section_title(self, parent, icon, text):
         row = ctk.CTkFrame(parent, fg_color="transparent")
@@ -98,20 +91,19 @@ class ReportsScreen:
         default = COLORS.get("text")
 
         ctk.CTkLabel(row, text=left_label, font=font(11),
-                     text_color=muted).grid(row=0, column=0, sticky="w")
+                      text_color=muted).grid(row=0, column=0, sticky="w")
         ctk.CTkLabel(row, text=left_val, font=font(13, "bold"),
-                     text_color=left_color or default).grid(
+                      text_color=left_color or default).grid(
             row=1, column=0, sticky="w", pady=(sv(2), 0))
 
         ctk.CTkLabel(row, text=right_label, font=font(11),
-                     text_color=muted).grid(
+                      text_color=muted).grid(
             row=0, column=1, sticky="w", padx=(sv(16), 0))
         ctk.CTkLabel(row, text=right_val, font=font(13, "bold"),
-                     text_color=right_color or default).grid(
+                      text_color=right_color or default).grid(
             row=1, column=1, sticky="w", padx=(sv(16), 0), pady=(sv(2), 0))
 
     def _change_chip(self, parent, label, value, positive_good=True):
-        """Small label showing a +/- percentage change."""
         color = COLORS.get("success") if (value >= 0) == positive_good else COLORS.get("danger")
         prefix = "+" if value > 0 else ""
         return ctk.CTkLabel(
@@ -122,7 +114,6 @@ class ReportsScreen:
         )
 
     def _text_bar(self, parent, label, value, max_value):
-        """Render a row with a Unicode horizontal bar chart."""
         row = ctk.CTkFrame(parent, fg_color="transparent")
         row.pack(fill="x", pady=sv(2))
 
@@ -161,8 +152,6 @@ class ReportsScreen:
     def _empty_state(self, parent, text):
         MutedLabel(parent, text=text, size=12).pack(pady=sv(10))
 
-    # ── Refresh ───────────────────────────────────────────────────
-
     def refresh_ui(self, user_id=None):
         if user_id is not None:
             self.user_id = user_id
@@ -175,7 +164,6 @@ class ReportsScreen:
         danger_col = COLORS.get("danger")
         input_bg = COLORS.get("input_bg")
 
-        # ── Monthly Comparison ──
         body = self.comparison_card._body
         self._clear(body)
         self._section_title(body, ICONS["reports"], "Monthly Comparison")
@@ -200,7 +188,7 @@ class ReportsScreen:
             chg_row = ctk.CTkFrame(body, fg_color="transparent")
             chg_row.pack(fill="x", pady=(sv(8), 0))
             ctk.CTkLabel(chg_row, text="Change:", font=font(11, "bold"),
-                         text_color=muted_col).pack(side="left", padx=(0, sv(8)))
+                          text_color=muted_col).pack(side="left", padx=(0, sv(8)))
 
             for key, label in [("income_pct", "Income"), ("expense_pct", "Expense"),
                                ("balance_pct", "Balance")]:
@@ -212,7 +200,6 @@ class ReportsScreen:
         except Exception:
             self._empty_state(body, "No data yet")
 
-        # ── Monthly Trend ──
         body = self.trend_card._body
         self._clear(body)
         self._section_title(body, ICONS["forward"], "Monthly Trend (Last 6 Months)")
@@ -227,7 +214,7 @@ class ReportsScreen:
                 for lbl, w in [("Month", 120), ("Income", 90),
                                ("Expense", 90), ("Balance", 90)]:
                     ctk.CTkLabel(header_row, text=lbl, font=font(10, "bold"),
-                                 text_color=muted_col, width=sv(w)).pack(
+                                  text_color=muted_col, width=sv(w)).pack(
                         side="left", padx=sv(4))
 
                 for m in trend:
@@ -244,12 +231,11 @@ class ReportsScreen:
                         (balance_str, 90, success_col if m["balance"] >= 0 else danger_col),
                     ]:
                         ctk.CTkLabel(row, text=val, font=font(11),
-                                     text_color=color, width=sv(w)).pack(
+                                      text_color=color, width=sv(w)).pack(
                             side="left", padx=sv(4), pady=sv(4))
         except Exception:
             self._empty_state(body, "No trend data")
 
-        # ── Category Breakdown ──
         body = self.category_card._body
         self._clear(body)
         self._section_title(body, ICONS["category"], "Expense Breakdown (30 Days)")
@@ -266,7 +252,6 @@ class ReportsScreen:
         except Exception:
             self._empty_state(body, "No data")
 
-        # ── Recurring Expenses ──
         body = self.recurring_card._body
         self._clear(body)
         self._section_title(body, ICONS["repeat"], "Recurring Expenses (2+ Months)")
@@ -290,11 +275,10 @@ class ReportsScreen:
 
                     detail = f'  avg {r["average_amount"]:,.0f}/mo  |  {r["months_active"]} months'
                     ctk.CTkLabel(inner, text=detail, font=font(11),
-                                 text_color=muted_col).pack(side="left")
+                                  text_color=muted_col).pack(side="left")
         except Exception:
             self._empty_state(body, "No data")
 
-        # ── Spending Insights ──
         body = self.insights_card._body
         self._clear(body)
         self._section_title(body, ICONS["tips"], "Spending Insights (30 Days)")
@@ -317,7 +301,6 @@ class ReportsScreen:
                     left_color=success_col if si["savings_rate"] >= 20 else danger_col,
                 )
 
-                # Velocity indicator
                 vel = si["velocity_direction"]
                 vel_color = (
                     COLORS.get("warning") if vel == "increasing"

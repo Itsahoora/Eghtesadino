@@ -3,7 +3,7 @@ import tkinter.messagebox as mb
 from utils.colors import COLORS
 from utils.scale import sv
 from utils.constants import ICONS
-from utils.ui_components import TitleLabel, BodyLabel, MutedLabel, font, animate_card_intro
+from utils.ui_components import TitleLabel, BodyLabel, MutedLabel, font
 
 
 class LoginScreen:
@@ -98,8 +98,6 @@ class LoginScreen:
             command=self._on_login,
         ).pack(pady=(0, sv(16)))
 
-        self.root.after(140, lambda: animate_card_intro(container))
-
         register_lbl = ctk.CTkLabel(
             inner,
             text="Don't have an account?  Create one",
@@ -109,11 +107,8 @@ class LoginScreen:
         register_lbl.pack(pady=(0, sv(4)))
         register_lbl.bind('<Button-1>', lambda e: self._on_register())
 
-        try:
-            self.root.winfo_toplevel().bind(
-                '<Return>', lambda e: self._on_login())
-        except Exception:
-            pass
+        self.root.winfo_toplevel().bind(
+            '<Return>', lambda e: self._on_login())
 
     def _toggle_password(self):
         self._show_pwd = not self._show_pwd
