@@ -7,11 +7,11 @@ Users can override the automatic scale via ``set_scale()``, which
 persists the choice to ``user_scale.json``.
 """
 
-import os
 import json
 import customtkinter as ctk
+from utils.resource_path import resource_path
 
-_SCALE_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'user_scale.json')
+_SCALE_FILE = resource_path('user_scale.json')
 
 _cached_scale: float | None = None
 

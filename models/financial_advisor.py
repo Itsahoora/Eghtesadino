@@ -5,15 +5,14 @@ import re
 import secrets
 import sqlite3
 from datetime import datetime, timedelta
+from utils.resource_path import resource_path
 
 
 class FinancialAdvisor:
     """Facade that owns every database operation the app needs."""
 
     def __init__(self):
-        self.db_path = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)), "financial_data.db"
-        )
+        self.db_path = resource_path("financial_data.db")
         self.pepper = os.environ.get(
             "EGHTESADINO_PEPPER", "eghtesadino-student-finance-v3"
         )

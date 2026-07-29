@@ -1,11 +1,11 @@
-import os
 import json
 import customtkinter as ctk
 from .theme.colors import DARK_COLORS, LIGHT_COLORS
+from utils.resource_path import resource_path
 
 
 class ThemeManager:
-    THEME_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'user_theme.json')
+    THEME_FILE = resource_path('user_theme.json')
 
     def __init__(self):
         self.mode = 'dark'

@@ -5,6 +5,7 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from models.financial_advisor import FinancialAdvisor
+from utils.resource_path import resource_path
 
 HAS_DISPLAY = bool(os.environ.get('DISPLAY'))
 
@@ -12,7 +13,7 @@ HAS_DISPLAY = bool(os.environ.get('DISPLAY'))
 class FinancialFeatureTests(unittest.TestCase):
     def setUp(self):
         self.advisor = FinancialAdvisor()
-        self.advisor.db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'test_financial_data.db')
+        self.advisor.db_path = resource_path('test_financial_data.db')
         self.advisor.init_database()
 
     def tearDown(self):
