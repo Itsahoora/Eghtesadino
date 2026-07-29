@@ -1,9 +1,3 @@
-"""Core business logic for Eghtesadino.
-
-Handles user authentication, transaction management, goal tracking,
-financial insights, and reporting.  All DB access is centralised here.
-"""
-
 import base64
 import hashlib
 import os
@@ -25,14 +19,11 @@ class FinancialAdvisor:
         )
         self.init_database()
 
-    # ── Database helpers ──────────────────────────────────────────
-
     def _connect(self):
-        """Return a new connection (callers must close it)."""
+        return sqlite3.connect(self.db_path)
         return sqlite3.connect(self.db_path)
 
     def init_database(self):
-        """Create tables and apply any missing schema migrations."""
         conn = self._connect()
         cursor = conn.cursor()
 
@@ -78,7 +69,6 @@ class FinancialAdvisor:
         conn.close()
 
     def _ensure_user_columns(self, conn):
-        """Add any columns that newer code expects but older DBs lack."""
         cursor = conn.cursor()
         cursor.execute("PRAGMA table_info(users)")
         columns = {row[1] for row in cursor.fetchall()}
@@ -95,7 +85,7 @@ class FinancialAdvisor:
             if col not in columns:
                 cursor.execute(ddl)
 
-    # ── Password / encryption helpers ─────────────────────────────
+    # ── Password / encryption helpers ─────────────────────
 
     def _hash_password(self, password, salt):
         return hashlib.pbkdf2_hmac(
@@ -129,7 +119,7 @@ class FinancialAdvisor:
         profile = self.get_user_profile(user_id)
         return profile.get("password_salt") or "default"
 
-    # ── Input normalization ───────────────────────────────────────
+    # ── Input normalization ───────────────────────────────
 
     def normalize_transaction_data(self, ttype, category, amount, description=""):
         normalized_type = (ttype or "").strip().lower()
@@ -150,7 +140,7 @@ class FinancialAdvisor:
             "description": normalized_description,
         }
 
-    # ── User management ───────────────────────────────────────────
+    # ── User management ──────────────────────────────────
 
     def register_user(self, username, password):
         if not username or not password:
@@ -258,7 +248,7 @@ class FinancialAdvisor:
         except Exception:
             return False
 
-    # ── Transactions ──────────────────────────────────────────────
+    # ── Transactions ──────────────────────────────────────
 
     def add_transaction(self, user_id, ttype, category, amount, description=""):
         normalized = self.normalize_transaction_data(ttype, category, amount, description)
@@ -286,7 +276,6 @@ class FinancialAdvisor:
             conn.close()
 
     def get_transactions(self, user_id, days=30):
-        """Return decrypted transactions from the last *days* days (newest first)."""
         conn = self._connect()
         date_limit = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
         rows = conn.execute(
@@ -309,7 +298,6 @@ class FinancialAdvisor:
         ]
 
     def get_all_transactions(self, user_id):
-        """Return every decrypted transaction for *user_id*."""
         return self.get_transactions(user_id, days=99999)
 
     def get_balance(self, user_id):
@@ -323,7 +311,7 @@ class FinancialAdvisor:
         conn.close()
         return data.get("income", 0) - data.get("expense", 0)
 
-    # ── Goals ─────────────────────────────────────────────────────
+    # ── Goals ─────────────────────────────────────────────
 
     def add_goal(self, user_id, goal_name, target_amount, deadline=None):
         conn = self._connect()
@@ -356,7 +344,6 @@ class FinancialAdvisor:
             return False
 
     def allocate_to_goal(self, user_id, goal_id, amount):
-        """Transfer *amount* from balance into a goal.  Returns (success, message)."""
         if amount <= 0:
             return False, "Amount must be positive"
 
@@ -415,10 +402,9 @@ class FinancialAdvisor:
         finally:
             conn.close()
 
-    # ── Analytics (shared helpers) ────────────────────────────────
+    # ── Analytics ──────────────────────────────────────────
 
     def _month_totals(self, user_id, start, end):
-        """Return {'income': ..., 'expense': ...} for a date range."""
         conn = self._connect()
         rows = conn.execute(
             "SELECT type, SUM(amount) FROM transactions "
@@ -434,10 +420,7 @@ class FinancialAdvisor:
             return 100.0 if new > 0 else 0.0
         return round(((new - old) / old) * 100, 1)
 
-    # ── Analytics: insights ───────────────────────────────────────
-
     def get_statistics(self, user_id):
-        """Return expense-by-category dict for the last 30 days."""
         expenses = {}
         for ttype, category, amount, _, _ in self.get_transactions(user_id, days=30):
             if ttype == "expense":
@@ -445,7 +428,6 @@ class FinancialAdvisor:
         return expenses
 
     def get_financial_insights(self, user_id):
-        """High-level summary used by the learning corner."""
         transactions = self.get_transactions(user_id, days=30)
         income_total = sum(amount for ttype, _, amount, _, _ in transactions if ttype == "income")
         expense_total = sum(amount for ttype, _, amount, _, _ in transactions if ttype == "expense")
@@ -475,7 +457,6 @@ class FinancialAdvisor:
         }
 
     def get_education_topics(self):
-        """Static list of student-friendly financial tips."""
         return [
             {
                 "title": "Needs vs Wants",
@@ -495,7 +476,6 @@ class FinancialAdvisor:
         ]
 
     def get_trend_data(self, user_id, days=30):
-        """Return (income_list, expense_list) — one value per day."""
         conn = self._connect()
         start_date = datetime.now() - timedelta(days=days)
         rows = conn.execute(
@@ -505,8 +485,8 @@ class FinancialAdvisor:
         ).fetchall()
         conn.close()
 
-        income_by_day: dict[str, float] = {}
-        expense_by_day: dict[str, float] = {}
+        income_by_day = {}
+        expense_by_day = {}
         for date_str, ttype, amount in rows:
             key = date_str.split(" ")[0]
             if ttype == "income":
@@ -521,10 +501,7 @@ class FinancialAdvisor:
             expense_list.append(expense_by_day.get(d_str, 0))
         return income_list, expense_list
 
-    # ── Analytics: spending insights ──────────────────────────────
-
     def get_spending_insights(self, user_id, days=30):
-        """Daily average, top categories, spending velocity, and projections."""
         transactions = self.get_transactions(user_id, days=days)
         expenses = [(cat, amt, date) for ttype, cat, amt, date, _ in transactions if ttype == "expense"]
         total_expense = sum(amt for _, amt, _ in expenses)
@@ -533,15 +510,13 @@ class FinancialAdvisor:
         active_days = len({date.split(" ")[0] for _, _, date in expenses}) or 1
         daily_avg = total_expense / max(active_days, 1)
 
-        # Category breakdown
-        cat_totals: dict[str, float] = {}
+        cat_totals = {}
         for cat, amt, _ in expenses:
             cat_totals[cat] = cat_totals.get(cat, 0) + amt
         top_categories = sorted(cat_totals.items(), key=lambda x: x[1], reverse=True)
 
         biggest = max(expenses, key=lambda x: x[1]) if expenses else None
 
-        # Spending velocity: first half vs second half of period
         mid = days // 2
         cutoff = (datetime.now() - timedelta(days=mid)).strftime("%Y-%m-%d")
         early = sum(amt for _, amt, date in expenses if date < cutoff)
@@ -573,10 +548,7 @@ class FinancialAdvisor:
             "savings_rate": round(savings_rate, 1),
         }
 
-    # ── Analytics: monthly comparison ─────────────────────────────
-
     def get_monthly_comparison(self, user_id):
-        """Compare current month income/expense/balance to the previous month."""
         now = datetime.now()
         current_start = now.replace(day=1).strftime("%Y-%m-%d")
         prev_month_end = (now.replace(day=1) - timedelta(days=1))
@@ -611,12 +583,9 @@ class FinancialAdvisor:
             },
         }
 
-    # ── Analytics: category breakdown ─────────────────────────────
-
     def get_category_breakdown(self, user_id, days=30, ttype="expense"):
-        """Return sorted category list with amounts, percentages, and text bars."""
         transactions = self.get_transactions(user_id, days=days)
-        cat_totals: dict[str, float] = {}
+        cat_totals = {}
         for typ, cat, amt, _, _ in transactions:
             if typ == ttype:
                 cat_totals[cat] = cat_totals.get(cat, 0) + amt
@@ -634,10 +603,7 @@ class FinancialAdvisor:
             })
         return breakdown
 
-    # ── Analytics: monthly trend ──────────────────────────────────
-
     def get_monthly_trend(self, user_id, months=6):
-        """Return last N months of income/expense/balance totals."""
         now = datetime.now()
         trend = []
         conn = self._connect()
@@ -669,13 +635,10 @@ class FinancialAdvisor:
             conn.close()
         return trend
 
-    # ── Analytics: recurring expenses ─────────────────────────────
-
     def get_recurring_expenses(self, user_id, days=90):
-        """Detect categories active in 2+ months (likely recurring bills)."""
         transactions = self.get_transactions(user_id, days=days)
 
-        cat_months: dict[str, dict[str, float]] = {}
+        cat_months = {}
         for ttype, cat, amt, date, _ in transactions:
             if ttype != "expense":
                 continue
@@ -699,10 +662,7 @@ class FinancialAdvisor:
         recurring.sort(key=lambda x: x["total"], reverse=True)
         return recurring
 
-    # ── Analytics: budget alerts ──────────────────────────────────
-
     def get_budget_alerts(self, user_id, days=30):
-        """Generate actionable alerts based on spending patterns."""
         insights = self.get_spending_insights(user_id, days=days)
         comparison = self.get_monthly_comparison(user_id)
         alerts = []
@@ -753,10 +713,7 @@ class FinancialAdvisor:
 
         return alerts
 
-    # ── Analytics: goal progress ──────────────────────────────────
-
     def get_goal_progress(self, user_id):
-        """Enhanced goal data with time-to-complete estimates."""
         goals = self.get_goals(user_id)
         insights = self.get_spending_insights(user_id, days=30)
         monthly_savings = max(insights["total_income"] - insights["total_expense"], 0)

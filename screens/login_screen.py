@@ -16,7 +16,6 @@ class LoginScreen:
     def build_ui(self):
         self.root = ctk.CTkFrame(self.master, fg_color=COLORS.get('light_bg'))
 
-        # ── Centered card ──
         container = ctk.CTkFrame(
             self.root,
             fg_color=COLORS.get('card_bg'),
@@ -28,7 +27,6 @@ class LoginScreen:
         inner = ctk.CTkFrame(container, fg_color='transparent')
         inner.pack(padx=sv(40), pady=sv(36))
 
-        # ── App icon + title ──
         ctk.CTkLabel(
             inner, text=ICONS['balance'],
             font=font(36), text_color=COLORS.get('primary')
@@ -47,7 +45,6 @@ class LoginScreen:
             size=12,
         ).pack(pady=(0, sv(28)))
 
-        # ── Username field ──
         BodyLabel(master=inner, text='Username', size=12,
                   text_color=COLORS.get('text_secondary')
                   ).pack(anchor='w', padx=sv(4))
@@ -62,7 +59,6 @@ class LoginScreen:
         )
         self.username_input.pack(pady=(sv(6), sv(16)))
 
-        # ── Password field ──
         BodyLabel(master=inner, text='Password', size=12,
                   text_color=COLORS.get('text_secondary')
                   ).pack(anchor='w', padx=sv(4))
@@ -92,7 +88,6 @@ class LoginScreen:
         )
         self.pwd_toggle_button.pack(side='left', padx=(sv(8), 0))
 
-        # ── Sign-in button ──
         ctk.CTkButton(
             inner, text=f'{ICONS["forward"]}  Sign In',
             width=sv(320), height=sv(44),
@@ -105,7 +100,6 @@ class LoginScreen:
 
         self.root.after(140, lambda: animate_card_intro(container))
 
-        # ── Register link ──
         register_lbl = ctk.CTkLabel(
             inner,
             text="Don't have an account?  Create one",
@@ -115,7 +109,6 @@ class LoginScreen:
         register_lbl.pack(pady=(0, sv(4)))
         register_lbl.bind('<Button-1>', lambda e: self._on_register())
 
-        # ── Enter key ──
         try:
             self.root.winfo_toplevel().bind(
                 '<Return>', lambda e: self._on_login())

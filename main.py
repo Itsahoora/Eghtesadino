@@ -1,5 +1,3 @@
-"""Eghtesadino application entry point."""
-
 import customtkinter as ctk
 from models.financial_advisor import FinancialAdvisor
 from screens.login_screen import LoginScreen
@@ -13,7 +11,6 @@ from utils.theme_manager import theme_manager
 
 
 class FinancialApp:
-    """Top-level application: owns the root window and screen routing."""
 
     def __init__(self):
         self.app = ctk.CTk()
@@ -27,7 +24,6 @@ class FinancialApp:
         self.container = ctk.CTkFrame(self.app, fg_color="transparent")
         self.container.pack(fill="both", expand=True)
 
-        # Build all screens once; they stay hidden until shown.
         self.screens = {
             "login": LoginScreen(self.advisor, self.container, on_success=self._on_login_success),
             "dashboard": DashboardScreen(self.advisor, self.container, on_navigate=self.show_screen),
@@ -37,10 +33,7 @@ class FinancialApp:
         }
 
         self.current_user = None
-        try:
-            theme_manager.register_listener(self._on_theme_change)
-        except Exception:
-            pass
+        theme_manager.register_listener(self._on_theme_change)
 
         self.show_screen("login")
 
@@ -49,7 +42,6 @@ class FinancialApp:
         self.show_screen("dashboard")
 
     def show_screen(self, name):
-        """Hide every screen, then show and refresh the requested one."""
         for screen in self.screens.values():
             try:
                 screen.pack_forget()
@@ -71,7 +63,6 @@ class FinancialApp:
         self.app.mainloop()
 
     def _on_theme_change(self):
-        """Re-render every screen so it picks up the new palette."""
         for screen in self.screens.values():
             if hasattr(screen, "refresh_ui"):
                 try:

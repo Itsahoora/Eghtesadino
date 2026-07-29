@@ -10,6 +10,7 @@ from utils.scale import sv
 from utils.ui_components import (
     MutedLabel, Card, font, animate_card_intro,
 )
+from utils.theme_manager import theme_manager
 
 
 class DashboardScreen:
@@ -21,9 +22,8 @@ class DashboardScreen:
         self.show_learning_tips = True
         self.compact_mode = False
         self._canvas = None
-        if self.master is not None and ctk is not None:
-            self._build_ui()
-            self._capture_canvas()
+        self._build_ui()
+        self._capture_canvas()
 
     def _build_ui(self):
         pad = sv(BASE_PADDING)
@@ -62,7 +62,7 @@ class DashboardScreen:
         header_btns.pack(side='right')
 
         self.delete_btn = ctk.CTkButton(
-            header_btns, text=f'{ICONS["delete"]}',
+            header_btns, text=ICONS['delete'],
             command=self._delete_account,
             fg_color='transparent', hover_color=COLORS.get('danger'),
             text_color=COLORS.get('danger'),
@@ -71,7 +71,7 @@ class DashboardScreen:
         self.delete_btn.pack(side='left', padx=sv(4))
 
         self.logout_btn = ctk.CTkButton(
-            header_btns, text=f'{ICONS["logout"]}',
+            header_btns, text=ICONS['logout'],
             command=self._logout,
             fg_color='transparent', hover_color=COLORS.get('warning'),
             text_color=COLORS.get('warning'),
@@ -92,7 +92,7 @@ class DashboardScreen:
         bal_inner.pack(fill='x', padx=sv(24), pady=sv(20))
 
         ctk.CTkLabel(
-            bal_inner, text=f'{ICONS["balance"]}  Balance',
+            bal_inner, text=f"{ICONS['balance']}  Balance",
             font=font(13), text_color=COLORS.get('muted_text'),
         ).pack(anchor='w')
 
@@ -107,13 +107,13 @@ class DashboardScreen:
         sub_row.pack(anchor='w', pady=(sv(4), 0))
 
         self.income_label = ctk.CTkLabel(
-            sub_row, text=f'{ICONS["income"]} Income: --',
+            sub_row, text=f"{ICONS['income']} Income: --",
             font=font(11), text_color=COLORS.get('success'),
         )
         self.income_label.pack(side='left', padx=(0, sv(16)))
 
         self.expense_label = ctk.CTkLabel(
-            sub_row, text=f'{ICONS["expense"]} Expenses: --',
+            sub_row, text=f"{ICONS['expense']} Expenses: --",
             font=font(11), text_color=COLORS.get('danger'),
         )
         self.expense_label.pack(side='left')
@@ -154,7 +154,7 @@ class DashboardScreen:
         self.goals_title.pack(side='left')
 
         ctk.CTkButton(
-            goals_header, text=f'{ICONS["add"]}  Add Goal',
+            goals_header, text=f"{ICONS['add']}  Add Goal",
             command=lambda: self._nav('add_goal'),
             fg_color=COLORS.get('primary'),
             hover_color=COLORS.get('primary_hover'),
@@ -169,7 +169,7 @@ class DashboardScreen:
         alloc_frame.pack(fill='x', padx=sv(20), pady=sv(12))
 
         self.alloc_label = ctk.CTkLabel(
-            alloc_frame, text=f'{ICONS["transfer"]} Allocate:',
+            alloc_frame, text=f"{ICONS['transfer']} Allocate:",
             font=font(11), text_color=COLORS.get('muted_text'),
         )
         self.alloc_label.pack(side='left', padx=(sv(10), sv(6)))
@@ -190,7 +190,7 @@ class DashboardScreen:
         self.alloc_amount_entry.pack(side='left', padx=small)
 
         ctk.CTkButton(
-            alloc_frame, text=f'{ICONS["add"]}',
+            alloc_frame, text=ICONS['add'],
             command=self._do_allocate,
             fg_color=COLORS.get('success'),
             hover_color=COLORS.get('accent'),
@@ -290,7 +290,7 @@ class DashboardScreen:
         self.amount_entry.grid(row=0, column=3, padx=sv(4), pady=sv(4), sticky='ew')
 
         ctk.CTkButton(
-            form, text=f'{ICONS["add"]}',
+            form, text=ICONS['add'],
             command=self._add_transaction,
             fg_color=COLORS.get('primary'),
             hover_color=COLORS.get('primary_hover'),
@@ -305,7 +305,7 @@ class DashboardScreen:
         bottom_frame.pack(fill='x', pady=(0, sv(20)))
 
         ctk.CTkButton(
-            bottom_frame, text=f'{ICONS["reports"]}  Reports',
+            bottom_frame, text=f"{ICONS['reports']}  Reports",
             command=lambda: self._nav('reports'),
             fg_color=COLORS.get('primary'),
             hover_color=COLORS.get('primary_hover'),
@@ -314,7 +314,7 @@ class DashboardScreen:
         ).pack(side='left', padx=(0, sv(10)))
 
         ctk.CTkButton(
-            bottom_frame, text=f'{ICONS["settings"]}  Settings',
+            bottom_frame, text=f"{ICONS['settings']}  Settings",
             command=lambda: self._nav('settings'),
             fg_color=COLORS.get('elevated_bg'),
             hover_color=COLORS.get('divider'),
@@ -353,14 +353,12 @@ class DashboardScreen:
     # ── Scroll helpers ──
 
     def _capture_canvas(self):
-        """Cache a reference to the CTkScrollableFrame's internal canvas."""
         try:
             self._canvas = self.root._parent_canvas
         except AttributeError:
             self._canvas = None
 
     def _update_scroll_region(self):
-        """Force scroll region recalculation after content changes."""
         try:
             self.root.update_idletasks()
             if self._canvas is not None:
@@ -525,8 +523,6 @@ class DashboardScreen:
             'info': '#0F2940',
             'success': '#0F2E1A',
         }
-        # Light-mode overrides
-        from utils.theme_manager import theme_manager
         if theme_manager.mode == 'light':
             level_bg = {
                 'danger': '#FEF2F2',
@@ -577,7 +573,7 @@ class DashboardScreen:
         if not goal_progress:
             MutedLabel(
                 self.goals_list_frame,
-                text=f'{ICONS["info"]}  No goals yet. Add one to start!',
+                text=f"{ICONS['info']}  No goals yet. Add one to start!",
                 size=12,
             ).pack(pady=sv(12))
             return
@@ -603,7 +599,7 @@ class DashboardScreen:
                 ICONS['warning'] if g['status'] == 'almost' else ICONS['goal'])
 
             ctk.CTkLabel(
-                name_frame, text=f'{status_icon}  {g["name"]}',
+                name_frame, text=f"{status_icon}  {g['name']}",
                 font=font(12, 'bold'), text_color=text_color,
             ).pack(anchor='w')
 
@@ -664,9 +660,9 @@ class DashboardScreen:
         try:
             insights = self.advisor.get_spending_insights(self.user_id)
             self.income_label.configure(
-                text=f'{ICONS["income"]} Income: {insights["total_income"]:,.2f}')
+                text=f"{ICONS['income']} Income: {insights['total_income']:,.2f}")
             self.expense_label.configure(
-                text=f'{ICONS["expense"]} Expenses: {insights["total_expense"]:,.2f}')
+                text=f"{ICONS['expense']} Expenses: {insights['total_expense']:,.2f}")
 
             self._set_stat(self.stat_daily, f'{insights["daily_average"]:,.0f}')
             self._set_stat(self.stat_savings, f'{insights["savings_rate"]:.1f}%',
@@ -725,7 +721,7 @@ class DashboardScreen:
             self.learning_box.configure(state='normal')
             self.learning_box.delete('0.0', 'end')
             self.learning_box.insert(
-                'end', f'{ICONS["balance"]}  Financial Insights\n')
+                'end', f"{ICONS['balance']}  Financial Insights\n")
             s = insights['summary']
             self.learning_box.insert(
                 'end',

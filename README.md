@@ -117,17 +117,17 @@ The SQLite database (`financial_data.db`) is created automatically on first laun
 │         FinancialApp  (screen router)            │
 └──────────┬────────────┬────────────┬─────────────┘
            │            │            │
-    ┌──────▼──┐  ┌──────▼──┐  ┌─────▼─────┐
-    │ Screens │  │ Models  │  │   Utils   │
-    │ (UI)    │  │ (Logic) │  │ (Shared)  │
-    └─────────┘  └─────────┘  └───────────┘
+     ┌──────▼──┐  ┌──────▼──┐  ┌─────▼─────┐
+     │ Screens │  │ Models  │  │   Utils   │
+     │ (UI)    │  │ (Logic) │  │ (Shared)  │
+     └─────────┘  └─────────┘  └───────────┘
 ```
 
 ### Project Structure
 
 ```
-Eghtesadino-Finance-App-/
-├── main.py                        # Application entry point
+Eghtesadino/
+├── main.py                        # Application entry point and screen router
 ├── models/
 │   ├── __init__.py
 │   └── financial_advisor.py       # Business logic & database layer
@@ -148,22 +148,12 @@ Eghtesadino-Finance-App-/
 │   └── theme/
 │       ├── __init__.py
 │       ├── colors.py              # Light & dark color palettes
-│       └── sizes.py               # Design tokens (font sizes, radii)
 ├── tests/
 │   ├── test_financial_features.py # Unit tests for core features
 │   └── run_theme_tests.py         # Theme smoke tests
 ├── assets/
 │   └── screenshots/               # Application screenshots
-├── docs/
-│   └── REPOSITORY_REVIEW.md       # Codebase review & findings
-├── .github/
-│   ├── ISSUE_TEMPLATE/            # Bug report & feature request templates
-│   ├── pull_request_template.md   # PR template
-│   └── workflows/
-│       └── python.yml             # CI pipeline
 ├── requirements.txt               # Python dependencies
-├── CONTRIBUTING.md                 # Contribution guidelines
-├── CHANGELOG.md                   # Version history
 ├── LICENSE                        # MIT License
 └── README.md                      # This file
 ```

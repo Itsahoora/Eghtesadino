@@ -1,4 +1,3 @@
-# Theme manager adapted for CustomTkinter (no Kivy dependency)
 import os
 import json
 import customtkinter as ctk
@@ -6,17 +5,13 @@ from .theme.colors import DARK_COLORS
 
 
 class ThemeManager:
-    ANIMATION_DURATION = 0.28
     THEME_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'user_theme.json')
 
     def __init__(self):
-        # default
         self.mode = 'dark'
         self._overrides = {}
         self._listeners = []
-        # try loading saved preference
         self._load()
-        # apply to CustomTkinter
         try:
             ctk.set_appearance_mode(self.mode.capitalize())
         except Exception:
@@ -27,10 +22,8 @@ class ThemeManager:
             with open(self.THEME_FILE, 'r', encoding='utf-8') as fh:
                 data = json.load(fh)
                 self.mode = data.get('mode', self.mode)
-        except FileNotFoundError:
-            return
         except Exception:
-            return
+            pass
 
     def _save(self):
         try:
@@ -64,16 +57,13 @@ class ThemeManager:
             ctk.set_appearance_mode(self.mode.capitalize())
         except Exception:
             pass
-        # notify listeners so UI can refresh colors
         for cb in list(self._listeners):
             try:
                 cb()
             except Exception:
                 pass
 
-    # --- convenience API used by tests / settings UI ---
     def get_color(self, token, default=None):
-        # return an override if present, otherwise look up base theme colors
         if token in self._overrides:
             return self._overrides[token]
         return DARK_COLORS.get(token, default)
@@ -97,13 +87,10 @@ class ThemeManager:
             pass
 
     def apply_preset(self, name):
-        # simple no-op preset applier; real presets could be added here
         return True
 
     def export_theme(self):
-        # return a JSON-serializable snapshot
-        data = {'mode': self.mode, 'overrides': self._overrides}
-        return data
+        return {'mode': self.mode, 'overrides': self._overrides}
 
     def import_theme(self, data):
         if isinstance(data, str):
@@ -122,5 +109,4 @@ class ThemeManager:
         return True
 
 
-# singleton instance used across the app
 theme_manager = ThemeManager()
