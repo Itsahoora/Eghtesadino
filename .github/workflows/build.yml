@@ -13,9 +13,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Validate required files exist
+      - name: Validate core files exist
         run: |
-          $required = @('requirements.txt', 'main.py', 'Eghtesadino.spec')
+          $required = @('requirements.txt', 'main.py')
           foreach ($file in $required) {
             if (-Not (Test-Path $file)) {
               Write-Error "Required file not found: $file"
@@ -43,6 +43,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller
+
+      - name: Generate spec file if missing
+        run: |
+          if (-Not (Test-Path "Eghtesadino.spec")) {
+            Write-Host "Eghtesadino.spec not found. Generating with pyi-makespec..."
+            pyi-makespec --name Eghtesadino --windowed --onedir main.py
+            Write-Host "Generated Eghtesadino.spec"
+          } else {
+            Write-Host "Eghtesadino.spec already exists, using existing spec"
+          }
 
       - name: Run tests
         continue-on-error: true
