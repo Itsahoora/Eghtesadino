@@ -4,18 +4,51 @@ import os
 import re
 import secrets
 import sqlite3
+import sys
+import time
 from datetime import datetime, timedelta
 from utils.resource_path import resource_path
+
+# Optional per-call timing for hot data methods.  Enabled with
+# EGHTESADINO_PROFILE=1 — silent by default.
+_PROFILE = os.environ.get("EGHTESADINO_PROFILE") == "1"
+
+
+def _timed(name):
+    def deco(fn):
+        def wrapper(self, *args, **kwargs):
+            if not _PROFILE:
+                return fn(self, *args, **kwargs)
+            t0 = time.perf_counter()
+            try:
+                return fn(self, *args, **kwargs)
+            finally:
+                print(
+                    f"[perf] {name}: {(time.perf_counter() - t0) * 1000:.1f} ms",
+                    file=sys.stderr,
+                )
+        return wrapper
+    return deco
 
 
 class FinancialAdvisor:
     """Facade that owns every database operation the app needs."""
+
+    # Bound the number of cached keys so a long-lived process touching
+    # many users never grows without limit.
+    _MAX_CACHED_KEYS = 64
 
     def __init__(self):
         self.db_path = resource_path("financial_data.db")
         self.pepper = os.environ.get(
             "EGHTESADINO_PEPPER", "eghtesadino-student-finance-v3"
         )
+        # Caches keyed by user identity.  All data caches are invalidated
+        # on every write via _clear_user_cache(); keys are deterministic
+        # (pepper + user_id + immutable salt) so they never go stale.
+        self._key_cache = {}
+        self._user_profile_cache = {}
+        self._transactions_cache = {}
         self.init_database()
 
     def _connect(self):
@@ -64,9 +97,32 @@ class FinancialAdvisor:
             )
         """)
 
+        # Indexes for the queries actually used by the app:
+        #   * transactions are always filtered by user_id (+ date) and
+        #     often ORDER BY date — a (user_id, date) index serves all of them
+        #   * goals are always looked up by user_id
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_transactions_user_date "
+            "ON transactions(user_id, date)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_goals_user ON goals(user_id)"
+        )
+
         self._ensure_user_columns(conn)
         conn.commit()
         conn.close()
+
+    def _clear_user_cache(self, user_id):
+        """Drop cached profile/transaction data for a user after a write.
+
+        Cached keys are *not* dropped: they derive deterministically from
+        the immutable per-user salt and never become stale.
+        """
+        self._user_profile_cache.pop(user_id, None)
+        stale = [k for k in self._transactions_cache if k[0] == user_id]
+        for key in stale:
+            self._transactions_cache.pop(key, None)
 
     def _ensure_user_columns(self, conn):
         cursor = conn.cursor()
@@ -96,8 +152,15 @@ class FinancialAdvisor:
         return self._hash_password(password, salt) == password_hash
 
     def _derive_key(self, user_id, salt):
-        seed = f"{self.pepper}:{user_id}:{salt}".encode("utf-8")
-        return hashlib.pbkdf2_hmac("sha256", seed, b"eghtesadino", 120_000)
+        cache_key = (user_id, salt)
+        key = self._key_cache.get(cache_key)
+        if key is None:
+            if len(self._key_cache) >= self._MAX_CACHED_KEYS:
+                self._key_cache.clear()
+            seed = f"{self.pepper}:{user_id}:{salt}".encode("utf-8")
+            key = hashlib.pbkdf2_hmac("sha256", seed, b"eghtesadino", 120_000)
+            self._key_cache[cache_key] = key
+        return key
 
     def _protect_text(self, text, user_id, salt):
         if text is None:
@@ -193,6 +256,9 @@ class FinancialAdvisor:
         }
 
     def get_user_profile(self, user_id):
+        cached = self._user_profile_cache.get(user_id)
+        if cached is not None:
+            return dict(cached)
         conn = self._connect()
         cursor = conn.cursor()
         cursor.execute(
@@ -204,7 +270,7 @@ class FinancialAdvisor:
         conn.close()
         if not row:
             return {}
-        return {
+        profile = {
             "id": row[0],
             "username": row[1],
             "display_name": row[2] or row[1],
@@ -213,6 +279,8 @@ class FinancialAdvisor:
             "show_learning_tips": bool(row[5]) if len(row) > 5 else True,
             "compact_mode": bool(row[6]) if len(row) > 6 else False,
         }
+        self._user_profile_cache[user_id] = profile
+        return dict(profile)
 
     def update_user_setting(self, user_id, key, value):
         if not user_id or key not in {"privacy_enabled", "show_learning_tips", "compact_mode"}:
@@ -222,6 +290,7 @@ class FinancialAdvisor:
             conn.execute(f"UPDATE users SET {key} = ? WHERE id = ?", (1 if value else 0, user_id))
             conn.commit()
             conn.close()
+            self._clear_user_cache(user_id)
             return True
         except Exception:
             return False
@@ -246,6 +315,7 @@ class FinancialAdvisor:
             )
             conn.commit()
             conn.close()
+            self._clear_user_cache(user_id)
             return True
         except Exception:
             return False
@@ -259,6 +329,7 @@ class FinancialAdvisor:
             cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
             conn.commit()
             conn.close()
+            self._clear_user_cache(user_id)
             return True
         except Exception:
             return False
@@ -284,6 +355,7 @@ class FinancialAdvisor:
                 ),
             )
             conn.commit()
+            self._clear_user_cache(user_id)
             return True
         except Exception:
             conn.rollback()
@@ -291,18 +363,26 @@ class FinancialAdvisor:
         finally:
             conn.close()
 
+    @_timed("get_transactions")
     def get_transactions(self, user_id, days=30):
+        cache_key = (user_id, days)
+        cached = self._transactions_cache.get(cache_key)
+        if cached is not None:
+            return list(cached)
+
         conn = self._connect()
-        date_limit = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
-        rows = conn.execute(
-            "SELECT type, category, amount, date, description "
-            "FROM transactions WHERE user_id = ? AND date >= ? ORDER BY date DESC",
-            (user_id, date_limit),
-        ).fetchall()
-        conn.close()
+        try:
+            date_limit = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
+            rows = conn.execute(
+                "SELECT type, category, amount, date, description "
+                "FROM transactions WHERE user_id = ? AND date >= ? ORDER BY date DESC",
+                (user_id, date_limit),
+            ).fetchall()
+        finally:
+            conn.close()
 
         salt = self._get_user_salt(user_id)
-        return [
+        result = [
             (
                 row[0],
                 self._unprotect_text(row[1], user_id, salt),
@@ -312,19 +392,24 @@ class FinancialAdvisor:
             )
             for row in rows
         ]
+        self._transactions_cache[cache_key] = result
+        return list(result)
 
     def get_all_transactions(self, user_id):
         return self.get_transactions(user_id, days=99999)
 
+    @_timed("get_balance")
     def get_balance(self, user_id):
         conn = self._connect()
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT type, SUM(amount) FROM transactions WHERE user_id = ? GROUP BY type",
-            (user_id,),
-        )
-        data = {t: amt for t, amt in cursor.fetchall()}
-        conn.close()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT type, SUM(amount) FROM transactions WHERE user_id = ? GROUP BY type",
+                (user_id,),
+            )
+            data = {t: amt for t, amt in cursor.fetchall()}
+        finally:
+            conn.close()
         return data.get("income", 0) - data.get("expense", 0)
 
     # ── Goals ─────────────────────────────────────────────
@@ -380,7 +465,13 @@ class FinancialAdvisor:
             conn.close()
             return False, f"Goal already reached! Target: {target_amount}"
 
-        current_balance = self.get_balance(user_id)
+        cursor.execute(
+            "SELECT type, SUM(amount) FROM transactions "
+            "WHERE user_id = ? GROUP BY type",
+            (user_id,),
+        )
+        balance_data = {t: amt for t, amt in cursor.fetchall()}
+        current_balance = balance_data.get("income", 0) - balance_data.get("expense", 0)
         if current_balance < amount:
             conn.close()
             return False, f"Insufficient balance. Current: {current_balance:,.0f}"
@@ -406,6 +497,7 @@ class FinancialAdvisor:
                 (actual_allocate, goal_id, user_id),
             )
             conn.commit()
+            self._clear_user_cache(user_id)
             if actual_allocate < amount:
                 return True, (
                     f"Allocated {actual_allocate:,.0f} (goal reached!). "
@@ -443,6 +535,7 @@ class FinancialAdvisor:
                 expenses[category] = expenses.get(category, 0) + amount
         return expenses
 
+    @_timed("get_financial_insights")
     def get_financial_insights(self, user_id):
         transactions = self.get_transactions(user_id, days=30)
         income_total = sum(amount for ttype, _, amount, _, _ in transactions if ttype == "income")
@@ -517,6 +610,7 @@ class FinancialAdvisor:
             expense_list.append(expense_by_day.get(d_str, 0))
         return income_list, expense_list
 
+    @_timed("get_spending_insights")
     def get_spending_insights(self, user_id, days=30):
         transactions = self.get_transactions(user_id, days=days)
         expenses = [(cat, amt, date) for ttype, cat, amt, date, _ in transactions if ttype == "expense"]
@@ -564,6 +658,7 @@ class FinancialAdvisor:
             "savings_rate": round(savings_rate, 1),
         }
 
+    @_timed("get_monthly_comparison")
     def get_monthly_comparison(self, user_id):
         now = datetime.now()
         current_start = now.replace(day=1).strftime("%Y-%m-%d")
@@ -599,6 +694,7 @@ class FinancialAdvisor:
             },
         }
 
+    @_timed("get_category_breakdown")
     def get_category_breakdown(self, user_id, days=30, ttype="expense"):
         transactions = self.get_transactions(user_id, days=days)
         cat_totals = {}
@@ -619,6 +715,7 @@ class FinancialAdvisor:
             })
         return breakdown
 
+    @_timed("get_monthly_trend")
     def get_monthly_trend(self, user_id, months=6):
         now = datetime.now()
         trend = []
@@ -651,6 +748,7 @@ class FinancialAdvisor:
             conn.close()
         return trend
 
+    @_timed("get_recurring_expenses")
     def get_recurring_expenses(self, user_id, days=90):
         transactions = self.get_transactions(user_id, days=days)
 
@@ -678,6 +776,7 @@ class FinancialAdvisor:
         recurring.sort(key=lambda x: x["total"], reverse=True)
         return recurring
 
+    @_timed("get_budget_alerts")
     def get_budget_alerts(self, user_id, days=30):
         insights = self.get_spending_insights(user_id, days=days)
         comparison = self.get_monthly_comparison(user_id)
@@ -729,6 +828,7 @@ class FinancialAdvisor:
 
         return alerts
 
+    @_timed("get_goal_progress")
     def get_goal_progress(self, user_id):
         goals = self.get_goals(user_id)
         insights = self.get_spending_insights(user_id, days=30)
