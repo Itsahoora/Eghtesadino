@@ -17,27 +17,21 @@ This project is being developed in the context of the **Khwarizmi Youth Award**.
 
 ## Visual Showcase
 
-The showcase below uses selected screenshots from the current application rather than every available capture.
-
-### Sign in
-
-![Eghtesadino sign-in screen](assets/screenshots/login.png)
+| Sign in | Settings |
+|---|---|
+| ![Sign-in screen](assets/screenshots/login.png) | ![Account, appearance, and display settings](assets/screenshots/settings-2.png) |
 
 ### Dashboard
 
-![Eghtesadino dashboard overview](assets/screenshots/dashboard.png)
-
-![Goals and recent transactions](assets/screenshots/dashboard-2.png)
-
-### Settings
-
-![Account, appearance, financial, and display settings](assets/screenshots/settings-2.png)
+| Overview | Goals & Transactions |
+|---|---|
+| ![Balance, income, expenses, and spending trend](assets/screenshots/dashboard.png) | ![Savings goals and recent transactions](assets/screenshots/dashboard-2.png) |
 
 ### Reports
 
-![Monthly comparison and six-month trend](assets/screenshots/reports.png)
-
-![Spending insights and category analysis](assets/screenshots/reports-3.png)
+| Monthly Overview | Spending Analysis |
+|---|---|
+| ![Month-to-month comparison and six-month trend](assets/screenshots/reports.png) | ![Spending insights and category breakdown](assets/screenshots/reports-3.png) |
 
 ## How It Works
 
@@ -116,7 +110,7 @@ The feature suite can be run with:
 python -m unittest discover -s tests -v
 ```
 
-The repository contains feature tests for authentication, normalization, transactions, goals, analytics, and user isolation. The current defense worktree also contains two protection-related assertions that do not match the present model implementation, so the full feature suite is not currently green. No claim of encryption or other security protection is made here.
+The repository contains `unittest` feature tests covering authentication, normalization, transactions, goals, analytics, and user isolation, together with a theme smoke-test script and a syntax-check command. The application itself makes no claim of encryption or other protection for stored data.
 
 For a syntax-only check:
 
