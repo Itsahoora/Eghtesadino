@@ -1,0 +1,63 @@
+LIGHT_COLORS = {
+    # Brand — teal/mint, fresh & youthful (not enterprise-blue)
+    'primary': '#0D9488',
+    'primary_hover': '#0F766E',
+    'secondary': '#0284C7',
+    'accent': '#14B8A6',
+    'success': '#059669',
+    'danger': '#E11D48',
+    'warning': '#D97706',
+    'info': '#0284C7',
+
+    # Surfaces — clean, professional hierarchy
+    'app_bg': '#F4F6F8',
+    'light_bg': '#F4F6F8',
+    'card_bg': '#FFFFFF',
+    'elevated_bg': '#FFFFFF',
+    'input_bg': '#EFF3F7',
+    'divider': '#D8E0EA',
+
+    'text': '#0F172A',
+    'text_secondary': '#475569',
+    'muted_text': '#94A3B8',
+    'text_on_primary': '#FFFFFF',
+
+    # Balance hero panel — soft teal tint
+    'hero_bg': '#E7F2F0',
+
+    'alert_danger_bg': '#FEEFF3',
+    'alert_warning_bg': '#FFF7E6',
+    'alert_info_bg': '#EFF6FF',
+    'alert_success_bg': '#EAF7F1',
+}
+
+DARK_COLORS = {
+    'primary': '#2DD4BF',
+    'primary_hover': '#5EEAD4',
+    'secondary': '#38BDF8',
+    'accent': '#2DD4BF',
+    'success': '#34D399',
+    'danger': '#FB7185',
+    'warning': '#FBBF24',
+    'info': '#38BDF8',
+
+    # Surfaces — clean, professional hierarchy
+    'app_bg': '#0B1120',
+    'light_bg': '#0B1120',
+    'card_bg': '#162035',
+    'elevated_bg': '#1D2C47',
+    'input_bg': '#121E32',
+    'divider': '#2E4265',
+
+    'text': '#E2E8F0',
+    'text_secondary': '#B0BFD3',
+    'muted_text': '#6B829C',
+    'text_on_primary': '#062827',
+
+    'hero_bg': '#102A38',
+
+    'alert_danger_bg': '#2A1420',
+    'alert_warning_bg': '#2A2110',
+    'alert_info_bg': '#0F2236',
+    'alert_success_bg': '#0F2E22',
+}

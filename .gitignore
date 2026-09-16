@@ -1,0 +1,46 @@
+# Python bytecode and caches
+__pycache__/
+*.pyc
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments and local tooling
+.venv/
+venv/
+env/
+.vscode/
+.idea/
+
+# Local application data and user preferences
+financial_data.db
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+user_prefs.json
+user_scale.json
+user_theme.json
+
+# Environment files and logs
+.env
+.env.*
+!.env.example
+
+# Operating-system metadata
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor swap files
+*.swp
+*.swo
+*~
+*.log
+
+# Build output
+build/
+dist/
+*.egg-info/
