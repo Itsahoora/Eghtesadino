@@ -2,7 +2,7 @@ import json
 import customtkinter as ctk
 from utils.resource_path import resource_path
 
-_SCALE_FILE = resource_path('user_scale.json')
+_SCALE_FILE = resource_path("user_scale.json")
 
 _cached_scale: float | None = None
 
@@ -10,8 +10,8 @@ _cached_scale: float | None = None
 def _read_scale() -> float:
     """Read saved scale from disk. Returns 1.0 if no file or on error"""
     try:
-        with open(_SCALE_FILE, 'r') as f:
-            return float(json.load(f).get('scale', 1.0))
+        with open(_SCALE_FILE, "r") as f:
+            return float(json.load(f).get("scale", 1.0))
     except Exception:
         return 1.0
 
@@ -19,8 +19,8 @@ def _read_scale() -> float:
 def _write_scale(value: float) -> None:
     """Persist scale value to disk."""
     try:
-        with open(_SCALE_FILE, 'w') as f:
-            json.dump({'scale': value}, f)
+        with open(_SCALE_FILE, "w") as f:
+            json.dump({"scale": value}, f)
     except Exception:
         pass
 

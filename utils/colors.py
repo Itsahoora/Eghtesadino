@@ -6,8 +6,8 @@ from .preferences import accent_tokens
 class ThemeColors(dict):
 
     def _palette(self):
-        mode = getattr(theme_manager, 'mode', 'dark')
-        base = DARK_COLORS if mode == 'dark' else LIGHT_COLORS
+        mode = getattr(theme_manager, "mode", "dark")
+        base = DARK_COLORS if mode == "dark" else LIGHT_COLORS
         # Apply the user's chosen accent to the shared brand tokens.
         try:
             primary, primary_hover = accent_tokens()
